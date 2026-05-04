@@ -86,7 +86,7 @@ CI 矩阵覆盖三平台均强制 green，杜绝"VS 可编 Linux 不可编"。�
 - Windows 上"开 IDE → F5 调试"的开箱体验最佳
 - Test Explorer 自动列出所有 Catch2 测试
 - 调试 OCCT 等大型 C++ 库的体验远超其他 IDE
-- 与 Qt VS Tools 配合，Qt 项目体验良好
+- Qt 集成通过 CMake AUTOMOC/AUTOUIC 原生处理（不依赖 Qt VS Tools 扩展，详见 [§8.2.5](../architecture/08-vs-toolchain.md)）— 与 CI / 跨 IDE / 跨平台一致
 - 可享受 Microsoft 持续投入的 C++ 工具改进
 
 ### Negative
@@ -112,8 +112,25 @@ CI 矩阵覆盖三平台均强制 green，杜绝"VS 可编 Linux 不可编"。�
 - `.editorconfig` — VS 自动识别
 - `.clang-format` / `.clang-tidy` — VS 内置工具自动应用
 - `tools/visualizers/mycad.natvis` — 自定义类型可视化
+- `tools/visualizers/qt6.natvis` — 从 vcpkg 拷贝（`<vcpkg>/installed/x64-windows/share/qt6/etc/qt6.natvis`），让 QString 等 Qt 类型在调试时人类可读
 - `docs/architecture/08-vs-toolchain.md` — 完整文档（已就绪）
 - `.githooks/pre-commit` — clang-format + clang-tidy + commit message lint
+
+### Qt 集成策略（明确决策）
+
+**不**安装 Qt Visual Studio Tools 扩展。Qt 工件全部通过 CMake 原生处理：
+- MOC / UIC / RCC：CMake 的 `AUTOMOC` / `AUTOUIC` / `AUTORCC` 自动调用 `qtbase` 提供的工具
+- `.ui` 编辑：vcpkg `qttools` 安装的独立 Qt Designer 程序
+- 翻译：CMake `qt_add_translations()` 自动调用 `lupdate`/`lrelease`
+- 运行时 DLL 部署：CMake 中 POST_BUILD 调用 `windeployqt`
+
+**理由**：
+- 减少一个外部 IDE 扩展依赖（CI / 跨 IDE / 跨平台一致）
+- CMake 是单一真相源
+- 不被 Qt VS Tools 自身的 bug 拖累
+- Qt 升级独立于 IDE 扩展更新节奏
+
+详见 [§八 §8.2.5 Qt 集成（纯 CMake）](../architecture/08-vs-toolchain.md)。
 
 ### CI 配置要点
 

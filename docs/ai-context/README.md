@@ -19,6 +19,7 @@ Claude Code 与 DeepSeek 之间通过两类标准化文件传递上下文：
 |---|---|---|
 | **CONTEXT.md** | Claude Code 给 DeepSeek 的"任务简报"（每任务一份） | [CONTEXT-template.md](./CONTEXT-template.md) |
 | **TASKS.md** | 任务卡（驱动整个工作流的核心文档） | [TASKS-template.md](./TASKS-template.md) |
+| **Prompt Library** | 生成 Sprint 手册 / Phase 概览 / 任务卡 / 复盘 / 风险扫描 的 5 个可复制 prompt | [prompt-library.md](./prompt-library.md) |
 
 ## 目录结构
 

@@ -27,7 +27,7 @@
 |---|---|---|---|---|---|---|---|
 | 7 | **★ 主 IDE** | **Visual Studio 2022 Community** | C++ 智能感知最强；CMake/vcpkg/Qt/Catch2 全部一等支持；调试器 Windows 最佳；个人开发者免费 | VSCode + clangd、CLion、Qt Creator | Windows 偏向（CI 必须三平台覆盖） | CMake + CMakePresets.json | 详见 [§八 vs-toolchain](./08-vs-toolchain.md)、[ADR-0008](../adr/ADR-0008-visual-studio-toolchain.md) |
 | 8 | **跨平台支持** | Linux：VSCode/CLion；macOS：CLion/Xcode | 项目"主推荐 VS，不强制 IDE" | — | 工具链不一致风险 | CMakePresets 多 preset | CI 强制三平台 green |
-| 9 | **VS 必装扩展** | Qt VS Tools、Test Adapter for Catch2、Clang Power Tools、Markdown Editor v2 | 见 §8.2.3 | — | — | — | 写入 `.vsconfig` 一键 import |
+| 9 | **VS 必装扩展** | Test Adapter for Catch2、Clang Power Tools、Markdown Editor v2、GitHub Copilot（可选） | 见 §8.2.3 | — | — | — | 写入 `.vsconfig` 一键 import；Qt 集成走纯 CMake，**不**装 Qt VS Tools |
 | 10 | **AI 行内补全** | GitHub Copilot | Visual Studio 原生集成 | Tabnine、Cursor | 非项目强制 | — | 与 Claude Code/DeepSeek 互补：Copilot 行内、Claude 设计、DeepSeek 实现 |
 
 ### 4.1.3 核心库（Tier A — 含 Port 抽象）

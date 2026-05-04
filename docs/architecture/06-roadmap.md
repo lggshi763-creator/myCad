@@ -105,7 +105,7 @@
 
 | 任务 | 标签 | 估时 | 验收 |
 |---|---|---|---|
-| 配置 Qt 6 通过 vcpkg 集成（含 Qt Visual Studio Tools 扩展） | 🟧 + 🟩 调试 | 2d | 空 Qt 窗口能弹出 |
+| 配置 Qt 6 通过 vcpkg 集成（纯 CMake AUTOMOC/AUTOUIC，**不**装 Qt VS Tools 扩展，详见 §8.2.5） | 🟧 + 🟩 调试 | 2d | 空 Qt 窗口能弹出，moc/uic 自动跑 |
 | 实现主窗口骨架（菜单栏 + 视口 + 状态栏） | 🟧 + 🟦 架构审查 | 3d | UI 出现 |
 | 把 OpenGLRenderAdapter 嵌入 QOpenGLWidget | 🟧 | 2d | 视口里画立方体 |
 | 实现 SqliteEventStore（IEventStore 的 SQLite 实现） | 🟧 + 🟦 审查 | 4d | 单测 + 能持久化 |

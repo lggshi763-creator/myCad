@@ -89,6 +89,7 @@ cmake --build --preset vs2022-debug
 | 文档 | 作用 |
 |---|---|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | 架构总目录 |
+| **[PLAYBOOK.md](./PLAYBOOK.md)** | **执行手册 — 从今天开始第一步做什么** |
 | [docs/architecture/](./docs/architecture/) | 9 章完整架构方案（业务、技术、AI 工作流、决策、代码骨架、路线图、风险、VS 工具链、自研路径） |
 | [docs/adr/](./docs/adr/) | 架构决策记录（ADR） |
 | [docs/ai-context/](./docs/ai-context/) | Claude Code + DeepSeek 协同所用的 CONTEXT.md / TASKS.md 模板 |

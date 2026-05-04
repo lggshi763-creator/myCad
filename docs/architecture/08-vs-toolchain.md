@@ -16,7 +16,7 @@
 | **MSVC 编译器** | 内置 | 需单独安装 | 需单独安装 | 需单独安装 |
 | **调试器** | Windows 上业界最佳（含时间旅行调试） | 良 | 优秀 | 良 |
 | **Catch2 测试探索** | Test Explorer 自动发现 | 需扩展 | 需配置 | 弱 |
-| **Qt 工程支持** | Qt VS Tools 扩展 | 弱 | 良 | 优秀（自家） |
+| **Qt 工程支持** | 原生 CMake AUTOMOC/AUTOUIC + Qt Designer 独立程序（不依赖 IDE 扩展） | 弱 | 良 | 优秀（自家） |
 | **OpenCASCADE 调试** | 良（PDB 支持成熟） | 受限 | 良 | 良 |
 | **远程 Linux 开发** | WSL/SSH 远程模式成熟 | 优秀（Remote Containers） | 优秀 | 弱 |
 | **价格** | 社区版免费（个人/开源/教育） | 免费 | $99/年（开源免费） | 免费 |
@@ -103,13 +103,20 @@ C:\dev\vcpkg\vcpkg integrate install
 
 | 扩展 | 用途 | 强制度 |
 |---|---|---|
-| **Qt Visual Studio Tools** | Qt 项目模板、`.qrc` / `.ts` 编辑、designer 集成 | ★★★ |
 | **Test Adapter for Catch2** | Test Explorer 显示 Catch2 测试用例 | ★★★ |
 | **Markdown Editor v2** | 编辑 `docs/**/*.md` 时的预览 | ★★ |
 | **GitHub Copilot** | AI 行内补全（与 Claude/DeepSeek 互补） | ★★ |
 | **Clang Power Tools** | clang-tidy / clang-format 集成 | ★★ |
 | **CMake Tools** | （VS 2022 已内置 CMake 支持，此扩展用于增强） | ★ |
 | **VsVim** | 习惯 vim 键位者用 | ★（口味） |
+
+> **关于 Qt Visual Studio Tools**：项目**不推荐**安装 Qt VS Tools 扩展。Qt 集成完全通过 CMake 的 AUTOMOC/AUTOUIC/AUTORCC + vcpkg 安装的 Designer/Linguist 独立程序完成。详见下方 [§8.2.5 Qt 集成（纯 CMake）](#825-qt-集成纯-cmake不依赖-qt-vs-tools)。
+>
+> 这样做的好处：
+> - 减少一个外部 IDE 扩展依赖（CI / 跨 IDE 协作友好）
+> - CMake 是单一真相源（VS / VSCode / CLion / 命令行所有环境一致）
+> - 不被 Qt VS Tools 自身的 bug 拖累
+> - Qt 升级独立于 IDE 扩展更新
 
 ### 8.2.4 Git 配置
 
@@ -123,6 +130,147 @@ git config --global core.longpaths true  # OCCT/Qt 路径长
 # 项目根（首次 clone 后）
 git config core.hooksPath .githooks       # 启用项目自带 hook
 ```
+
+### 8.2.5 Qt 集成（纯 CMake，不依赖 Qt VS Tools）
+
+myCad 故意不依赖 Qt Visual Studio Tools 扩展。所有 Qt 工件（MOC、UIC、RCC、TS 翻译、资源）都通过 CMake 原生处理，配合 vcpkg 安装的独立 Qt 工具程序。
+
+#### 工作分配
+
+| Qt 工件 | 处理方式 | 工具来源 |
+|---|---|---|
+| **元对象编译（MOC）** — 含 `Q_OBJECT` 的头文件 | CMake `AUTOMOC ON` 自动调用 `moc.exe` | vcpkg `qtbase` |
+| **UI 编译（UIC）** — `.ui` → `ui_*.h` | CMake `AUTOUIC ON` 自动调用 `uic.exe` | vcpkg `qtbase` |
+| **资源编译（RCC）** — `.qrc` → C++ 源 | CMake `AUTORCC ON` 自动调用 `rcc.exe` | vcpkg `qtbase` |
+| **`.ui` 可视化设计** | 独立的 Qt Designer 程序 | vcpkg `qttools` 安装目录的 `designer.exe` |
+| **`.ts` 翻译编辑** | 独立的 Qt Linguist 程序 | vcpkg `qttools` 安装目录的 `linguist.exe` |
+| **`lupdate` / `lrelease`** | CMake `qt_add_translations()` 自动调用 | vcpkg `qttools` |
+| **运行时 DLL 部署** | `windeployqt.exe` | vcpkg `qtbase` |
+| **调试时类型可视化** | 项目自带 `tools/visualizers/qt6.natvis`（从 vcpkg 拷贝或自维护） | 独立文件 |
+
+#### CMake 配置示例
+
+```cmake
+cmake_minimum_required(VERSION 3.25)
+project(mycad CXX)
+
+# Qt 自动工具（替代 Qt VS Tools）
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)  # AUTOUIC 生成的 ui_*.h 在 build 目录
+
+find_package(Qt6 6.5 REQUIRED COMPONENTS
+    Core Gui Widgets OpenGLWidgets LinguistTools
+)
+
+add_executable(mycad_app
+    src/ui/MainWindow.cpp
+    src/ui/MainWindow.hpp        # 含 Q_OBJECT，AUTOMOC 自动处理
+    src/ui/MainWindow.ui          # AUTOUIC 自动生成 ui_MainWindow.h
+    src/ui/resources.qrc          # AUTORCC 自动嵌入资源
+)
+
+target_link_libraries(mycad_app PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::OpenGLWidgets
+)
+
+# 翻译（替代 Linguist 工具栏按钮）
+qt_add_translations(mycad_app
+    TS_FILES translations/zh_CN.ts translations/en_US.ts
+    LUPDATE_OPTIONS -no-obsolete
+)
+
+# Windows 上自动部署 Qt DLL 到输出目录（开发时方便 F5）
+if(WIN32)
+    add_custom_command(TARGET mycad_app POST_BUILD
+        COMMAND Qt6::windeployqt
+                --no-translations --no-system-d3d-compiler --no-opengl-sw
+                $<TARGET_FILE:mycad_app>
+        COMMENT "Deploying Qt runtime DLLs"
+    )
+endif()
+```
+
+`vcpkg.json` 需要 `qttools`（提供 moc/uic/rcc/lupdate/lrelease/designer/linguist）：
+
+```json
+{
+  "dependencies": [
+    { "name": "qtbase", "default-features": false,
+      "features": ["gui", "widgets", "opengl", "openglwidgets"] },
+    "qttools"
+  ]
+}
+```
+
+#### 编辑 `.ui` 文件的工作流
+
+VS 不内嵌 .ui 编辑器（这正是 Qt VS Tools 替代的功能）。改用：
+
+1. **首次设置文件关联**（一次性）：
+   - Windows 资源管理器 → 右键 `.ui` 文件 → 打开方式 → 选择 `vcpkg/installed/x64-windows/tools/Qt6/bin/designer.exe`
+   - 勾选"始终用此应用打开"
+
+2. **VS 内右键打开**：
+   - Solution Explorer 中右键 `.ui` 文件 → "Open With..." → 选 designer.exe
+   - 或者 "Open Containing Folder" → 在资源管理器中双击
+
+3. **保存即生效**：Designer 保存后，VS 下次构建时 AUTOUIC 自动重新生成 `ui_*.h`
+
+> 提示：维护一个 `tools/open-designer.bat`，双击即可启动 Designer，避免每次找路径。
+
+#### F5 调试时的 Qt DLL 路径
+
+由于 vcpkg 的 Qt DLL 不在系统 PATH，启动时会找不到。两种解决：
+
+**方法 A（推荐）**：上方 CMake 中的 `windeployqt` 自动复制到输出目录 → F5 直接可跑。
+
+**方法 B**：在 VS 项目调试设置中加环境变量：
+- 右键 `mycad_app` → Properties → Debugging → Environment：
+  ```
+  PATH=$(VcpkgManifestRoot)\installed\x64-windows\bin;%PATH%
+  ```
+
+**方法 C**（命令行调试）：用 `launch.vs.json`：
+```json
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "mycad_app.exe",
+      "name": "mycad_app (Debug)",
+      "env": {
+        "PATH": "${env.VCPKG_ROOT}\\installed\\x64-windows\\bin;${env.PATH}"
+      }
+    }
+  ]
+}
+```
+
+#### Qt 类型 natvis 可视化
+
+vcpkg 装的 Qt 6 通常带一份 `qt6.natvis`，路径类似：
+```
+<vcpkg>/installed/x64-windows/share/qt6/etc/qt6.natvis
+```
+
+把它拷贝到 `tools/visualizers/qt6.natvis`，VS 自动加载（CMakePresets 中的 binary dir 与 source dir 都会被 VS 扫描 natvis 文件）。
+
+效果：调试时 `QString` 显示为人类可读字符串而非内部 `d_ptr` 结构；`QList<T>` 显示为元素列表；`QPointer<T>` 显示是否仍有效等。
+
+#### 跨平台与团队协作的额外好处
+
+- **Linux 贡献者**用 VSCode + clangd 也能开发 Qt UI（`.ui` 用 Linux 上的 designer）
+- **CI** 不需要装 Qt VS Tools 扩展
+- **新人** 不需要"先装扩展再克隆项目"，clone + cmake 就能跑
+- **Qt 升级** 只需 vcpkg.json 改版本号，不被 IDE 扩展兼容性掣肘
 
 ---
 
