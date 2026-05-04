@@ -1,0 +1,47 @@
+myCad — AI-native open-source parametric CAD kernel and desktop application
+Copyright (C) 2026 myCad contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+================================================================================
+NOTE TO MAINTAINER
+================================================================================
+
+This file currently contains only the SHORT NOTICE of LGPL-3.0-or-later.
+
+For a fully compliant distribution, replace this file with:
+
+  1. The full text of LGPL-3.0:
+     https://www.gnu.org/licenses/lgpl-3.0.txt
+
+  2. The full text of GPL-3.0 (referenced by LGPL-3.0):
+     https://www.gnu.org/licenses/gpl-3.0.txt
+
+Common practice:
+  - LICENSE         → contains LGPL-3.0 full text
+  - LICENSE.GPL     → contains GPL-3.0 full text (referenced by LGPL)
+  - COPYING         → optional alias for LICENSE
+
+Quick way to fetch them:
+
+  curl -o LICENSE      https://www.gnu.org/licenses/lgpl-3.0.txt
+  curl -o LICENSE.GPL  https://www.gnu.org/licenses/gpl-3.0.txt
+
+For per-file SPDX header (recommended for source files):
+
+  // SPDX-License-Identifier: LGPL-3.0-or-later
+  // Copyright (C) 2026 myCad contributors
+
+See ADR-0001 (docs/adr/ADR-0001-license-lgpl-3.md) for the protocol decision rationale.
+================================================================================
