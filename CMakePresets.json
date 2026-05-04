@@ -1,0 +1,140 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MYCAD_ENABLE_TESTING": "ON",
+        "MYCAD_ENABLE_BENCHMARKS": "OFF"
+      }
+    },
+    {
+      "name": "vs2022-x64-debug",
+      "displayName": "VS 2022 x64 Debug",
+      "inherits": "_base",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "vs2022-x64-release",
+      "displayName": "VS 2022 x64 Release (RelWithDebInfo)",
+      "inherits": "vs2022-x64-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "MYCAD_ENABLE_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "vs2022-x64-asan",
+      "displayName": "VS 2022 x64 + AddressSanitizer",
+      "inherits": "vs2022-x64-debug",
+      "cacheVariables": {
+        "MYCAD_ENABLE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "vs2022-x64-ubsan",
+      "displayName": "VS 2022 x64 + UndefinedBehaviorSanitizer",
+      "inherits": "vs2022-x64-debug",
+      "cacheVariables": {
+        "MYCAD_ENABLE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "linux-gcc-debug",
+      "displayName": "Linux GCC Debug",
+      "inherits": "_base",
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-gcc-release",
+      "displayName": "Linux GCC Release (RelWithDebInfo)",
+      "inherits": "linux-gcc-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "MYCAD_ENABLE_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "macos-clang-debug",
+      "displayName": "macOS Clang Debug",
+      "inherits": "_base",
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx"
+      }
+    },
+    {
+      "name": "macos-clang-release",
+      "displayName": "macOS Clang Release (RelWithDebInfo)",
+      "inherits": "macos-clang-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "MYCAD_ENABLE_BENCHMARKS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "vs2022-x64-debug",     "configurePreset": "vs2022-x64-debug",     "configuration": "Debug" },
+    { "name": "vs2022-x64-release",   "configurePreset": "vs2022-x64-release",   "configuration": "RelWithDebInfo" },
+    { "name": "vs2022-x64-asan",      "configurePreset": "vs2022-x64-asan",      "configuration": "Debug" },
+    { "name": "vs2022-x64-ubsan",     "configurePreset": "vs2022-x64-ubsan",     "configuration": "Debug" },
+    { "name": "linux-gcc-debug",      "configurePreset": "linux-gcc-debug" },
+    { "name": "linux-gcc-release",    "configurePreset": "linux-gcc-release" },
+    { "name": "macos-clang-debug",    "configurePreset": "macos-clang-debug" },
+    { "name": "macos-clang-release",  "configurePreset": "macos-clang-release" }
+  ],
+  "testPresets": [
+    {
+      "name": "_test_base",
+      "hidden": true,
+      "output": { "outputOnFailure": true, "verbosity": "default" },
+      "execution": { "stopOnFailure": false, "noTestsAction": "error" }
+    },
+    { "name": "vs2022-x64-debug",    "inherits": "_test_base", "configurePreset": "vs2022-x64-debug",    "configuration": "Debug" },
+    { "name": "vs2022-x64-release",  "inherits": "_test_base", "configurePreset": "vs2022-x64-release",  "configuration": "RelWithDebInfo" },
+    { "name": "vs2022-x64-asan",     "inherits": "_test_base", "configurePreset": "vs2022-x64-asan",     "configuration": "Debug" },
+    { "name": "vs2022-x64-ubsan",    "inherits": "_test_base", "configurePreset": "vs2022-x64-ubsan",    "configuration": "Debug" },
+    { "name": "linux-gcc-debug",     "inherits": "_test_base", "configurePreset": "linux-gcc-debug" },
+    { "name": "linux-gcc-release",   "inherits": "_test_base", "configurePreset": "linux-gcc-release" },
+    { "name": "macos-clang-debug",   "inherits": "_test_base", "configurePreset": "macos-clang-debug" },
+    { "name": "macos-clang-release", "inherits": "_test_base", "configurePreset": "macos-clang-release" }
+  ]
+}

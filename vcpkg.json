@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "mycad",
+  "version-string": "0.0.1",
+  "description": "Open-source parametric CAD",
+  "homepage": "https://github.com/mycad/mycad",
+  "license": "LGPL-3.0-or-later",
+  "builtin-baseline": "120deac3062162151622ca4860575a33844ba10b",
+  "dependencies": [
+    "opencascade",
+    {
+      "name": "qtbase",
+      "default-features": false,
+      "features": ["gui", "widgets", "opengl", "openglwidgets"]
+    },
+    "qttools",
+    "entt",
+    "eigen3",
+    "spdlog",
+    "fmt",
+    "flatbuffers",
+    "tl-expected",
+    "nlohmann-json",
+    "tomlplusplus",
+    "zstd",
+    "sqlite3"
+  ],
+  "features": {
+    "tests": {
+      "description": "Build unit tests",
+      "dependencies": ["catch2"]
+    },
+    "benchmarks": {
+      "description": "Build benchmarks",
+      "dependencies": ["benchmark"]
+    }
+  },
+  "default-features": ["tests"]
+}

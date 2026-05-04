@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# myCad pre-commit hook — runs clang-format check on staged C/C++ files.
+#
+# Activate once per clone:
+#   git config core.hooksPath .githooks
+#
+# Skip in emergencies (use sparingly):
+#   git commit --no-verify
+#
+# Cross-platform notes:
+#   - On Linux/macOS this runs under the system bash.
+#   - On Windows, Git for Windows ships its own bash (msys); this script runs
+#     identically when commits originate from PowerShell, cmd, or any IDE.
+
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+log() { printf '[pre-commit] %s\n' "$*" >&2; }
+
+# Resolve clang-format. Prefer the version on PATH; fall back to common
+# Visual Studio install locations on Windows.
+find_clang_format() {
+    if command -v clang-format >/dev/null 2>&1; then
+        command -v clang-format
+        return 0
+    fi
+    for candidate in \
+        "/c/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-format.exe" \
+        "/c/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/Llvm/x64/bin/clang-format.exe" \
+        "/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/x64/bin/clang-format.exe" \
+        "/c/Program Files/LLVM/bin/clang-format.exe"
+    do
+        if [ -x "$candidate" ]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# ---------------------------------------------------------------------------
+# Collect staged C/C++ files
+# ---------------------------------------------------------------------------
+mapfile -t files < <(
+    git diff --cached --name-only --diff-filter=ACMR -z 2>/dev/null \
+        | tr '\0' '\n' \
+        | grep -Ei '\.(c|cc|cpp|cxx|h|hh|hpp|hxx|inl|ipp)$' \
+        || true
+)
+
+if [ "${#files[@]}" -eq 0 ]; then
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Locate clang-format
+# ---------------------------------------------------------------------------
+if ! CF=$(find_clang_format); then
+    log "WARNING: clang-format not found on PATH or in known VS install paths."
+    log "         Install VS 2022 'C++ Clang compiler' workload, or LLVM,"
+    log "         or apt/brew install clang-format."
+    log "         Skipping format check (commit allowed)."
+    exit 0
+fi
+
+log "Using $CF"
+log "Checking ${#files[@]} staged C/C++ file(s) against .clang-format..."
+
+# ---------------------------------------------------------------------------
+# Check each file. --dry-run + --Werror returns nonzero on violations
+# without modifying anything. We collect all violations before failing so
+# the developer sees the full list at once.
+# ---------------------------------------------------------------------------
+violations=()
+for f in "${files[@]}"; do
+    # Skip files that no longer exist in the working tree (deleted after stage).
+    [ -f "$f" ] || continue
+    if ! "$CF" --style=file --dry-run --Werror "$f" >/dev/null 2>&1; then
+        violations+=("$f")
+    fi
+done
+
+if [ "${#violations[@]}" -gt 0 ]; then
+    log ""
+    log "Formatting violations in ${#violations[@]} file(s):"
+    for f in "${violations[@]}"; do
+        log "  - $f"
+    done
+    log ""
+    log "Fix with:"
+    log "  clang-format -i ${violations[*]}"
+    log ""
+    log "Then 'git add' the affected files and re-commit."
+    log "(Use 'git commit --no-verify' to bypass — discouraged.)"
+    exit 1
+fi
+
+log "All staged C/C++ files are properly formatted."
+exit 0

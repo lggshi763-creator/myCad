@@ -1,0 +1,11 @@
+# LeakSanitizer suppressions for known third-party leaks that aren't ours.
+# Format: leak:<symbol-or-library-substring>
+# Add entries sparingly and document why each one is here.
+
+# Qt's static plugin registry holds singletons that Qt does not free at exit.
+leak:libQt6Core
+leak:libQt6Gui
+
+# OCCT's global handle tables are intentionally never released.
+leak:TKernel
+leak:TKMath

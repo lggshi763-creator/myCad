@@ -1,0 +1,42 @@
+{
+  "_comment": [
+    "Personal preset overrides for myCad.",
+    "Copy this file to CMakeUserPresets.json (which is git-ignored) and tweak as needed.",
+    "Common reasons to use this:",
+    "  - Custom VCPKG_ROOT (when not set as environment variable)",
+    "  - Custom toolchain locations on Linux/macOS",
+    "  - Local debug-only flags or extra cache variables",
+    "  - Pointing at an alternative Qt or OCCT install",
+    "Do NOT commit this file. It is user-local."
+  ],
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "my-vs2022-debug",
+      "displayName": "MY VS 2022 Debug (overrides VCPKG_ROOT)",
+      "inherits": "vs2022-x64-debug",
+      "environment": {
+        "VCPKG_ROOT": "C:/dev/vcpkg"
+      }
+    },
+    {
+      "name": "my-linux-debug",
+      "displayName": "MY Linux Debug",
+      "inherits": "linux-gcc-debug",
+      "environment": {
+        "VCPKG_ROOT": "$env{HOME}/dev/vcpkg"
+      },
+      "cacheVariables": {
+        "MYCAD_WARNINGS_AS_ERRORS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "my-vs2022-debug", "configurePreset": "my-vs2022-debug" },
+    { "name": "my-linux-debug",  "configurePreset": "my-linux-debug" }
+  ],
+  "testPresets": [
+    { "name": "my-vs2022-debug", "configurePreset": "my-vs2022-debug" },
+    { "name": "my-linux-debug",  "configurePreset": "my-linux-debug" }
+  ]
+}

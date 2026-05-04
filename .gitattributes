@@ -1,0 +1,105 @@
+# ============================================================================
+# Default: auto-detect text files; normalize to LF in repo, native on checkout
+# ============================================================================
+* text=auto eol=lf
+
+# ============================================================================
+# C / C++ source — always LF
+# ============================================================================
+*.c     text eol=lf
+*.cc    text eol=lf
+*.cpp   text eol=lf
+*.cxx   text eol=lf
+*.h     text eol=lf
+*.hh    text eol=lf
+*.hpp   text eol=lf
+*.hxx   text eol=lf
+*.inl   text eol=lf
+*.ipp   text eol=lf
+
+# ============================================================================
+# Build / project files — LF
+# ============================================================================
+CMakeLists.txt    text eol=lf
+*.cmake           text eol=lf
+*.cmake.in        text eol=lf
+CMakePresets.json text eol=lf
+vcpkg.json        text eol=lf
+vcpkg-configuration.json text eol=lf
+
+# ============================================================================
+# Qt files — LF
+# ============================================================================
+*.ui     text eol=lf
+*.qrc    text eol=lf
+*.ts     text eol=lf
+
+# ============================================================================
+# Schema / serialization — LF
+# ============================================================================
+*.fbs    text eol=lf
+*.proto  text eol=lf
+*.json   text eol=lf
+*.toml   text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.xml    text eol=lf
+
+# ============================================================================
+# Docs / config — LF
+# ============================================================================
+*.md          text eol=lf
+*.rst         text eol=lf
+.editorconfig text eol=lf
+.clang-format text eol=lf
+.clang-tidy   text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+
+# ============================================================================
+# Shell / script files
+# ============================================================================
+*.sh   text eol=lf
+*.py   text eol=lf
+
+# Windows-specific scripts retain CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# ============================================================================
+# Binary assets — never normalize
+# ============================================================================
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.bmp   binary
+*.ico   binary
+*.svg   binary
+*.pdf   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.7z    binary
+*.dll   binary
+*.exe   binary
+*.lib   binary
+*.so    binary
+*.dylib binary
+*.a     binary
+*.o     binary
+*.obj   binary
+*.pdb   binary
+
+# ============================================================================
+# Visual Studio debugger visualizers — LF
+# ============================================================================
+*.natvis text eol=lf
+
+# ============================================================================
+# Linguist overrides (GitHub language stats)
+# ============================================================================
+docs/**          linguist-documentation
+tools/**         linguist-vendored
+*.fbs            linguist-language=FlatBuffers

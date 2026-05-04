@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# myCad commit-msg hook — enforces Conventional Commits 1.0.
+#
+# Activate once per clone:
+#   git config core.hooksPath .githooks
+#
+# Spec: https://www.conventionalcommits.org/en/v1.0.0/
+#
+# Format:
+#   <type>(<scope>)?(!)?: <subject>
+#
+#   <type>:    feat | fix | docs | style | refactor | perf | test
+#              build | ci | chore | revert
+#   <scope>:   optional, free-form lower-kebab (e.g. domain, ui, eventstore)
+#   '!':       optional, indicates BREAKING CHANGE
+#   <subject>: imperative, max 72 chars recommended (100 hard limit)
+#
+# Examples:
+#   feat(domain): add Sketch aggregate root
+#   fix(ui): correct viewport gizmo z-fighting
+#   feat(format)!: switch event schema to FlatBuffers
+#   ci: enable sanitizers job
+#   docs(adr): record OCCT version pin decision
+
+set -euo pipefail
+
+msg_file="${1:-}"
+if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+    echo "[commit-msg] ERROR: missing or unreadable commit message file." >&2
+    exit 1
+fi
+
+# Strip comment lines (those Git inserts via --verbose / template).
+first_line=$(grep -v '^#' "$msg_file" | sed -n '1p')
+
+# ---------------------------------------------------------------------------
+# Pass-through cases — Git generates these automatically; not subject to CC.
+# ---------------------------------------------------------------------------
+case "$first_line" in
+    Merge*|Revert*|"fixup! "*|"squash! "*|"amend! "*)
+        exit 0
+        ;;
+esac
+
+# Empty (e.g. user aborted by clearing the message)
+if [ -z "$first_line" ]; then
+    echo "[commit-msg] ERROR: empty commit message." >&2
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Conventional Commits regex
+# ---------------------------------------------------------------------------
+# type(scope)?!?: subject
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?(!)?:[[:space:]].+$'
+
+if ! printf '%s' "$first_line" | grep -Eq "$pattern"; then
+    cat >&2 <<'EOF'
+[commit-msg] ERROR: Commit message does not follow Conventional Commits 1.0.
+
+Format:
+  <type>(<scope>)?(!)?: <subject>
+
+Allowed types:
+  feat | fix | docs | style | refactor | perf | test | build | ci | chore | revert
+
+Examples:
+  feat(domain): add Sketch aggregate root
+  fix(ui): correct viewport gizmo z-fighting
+  feat(format)!: switch event schema to FlatBuffers   (breaking change)
+  ci: enable sanitizers job
+
+Tips:
+  - Subject must use the imperative mood ("add", not "added"/"adds").
+  - No trailing period in the subject line.
+  - Keep the subject under 72 chars (100 chars is the hard limit).
+  - For breaking changes, append "!" before ":" AND add a "BREAKING CHANGE:"
+    paragraph in the body.
+
+(Use 'git commit --no-verify' to bypass — discouraged.)
+EOF
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Subject-line length advisory (hard limit 100, soft warn at 72)
+# ---------------------------------------------------------------------------
+len=${#first_line}
+if [ "$len" -gt 100 ]; then
+    echo "[commit-msg] ERROR: subject line is $len chars; hard limit is 100." >&2
+    exit 1
+elif [ "$len" -gt 72 ]; then
+    echo "[commit-msg] WARNING: subject line is $len chars; recommended <= 72." >&2
+fi
+
+# ---------------------------------------------------------------------------
+# Subject style nits (warnings only)
+# ---------------------------------------------------------------------------
+# Strip the "type(scope)?!?: " prefix to inspect just the subject text.
+subject=$(printf '%s' "$first_line" | sed -E 's/^[a-z]+(\([^)]+\))?!?:[[:space:]]+//')
+
+# No trailing period.
+case "$subject" in
+    *.) echo "[commit-msg] WARNING: subject should not end with a period." >&2 ;;
+esac
+
+# First word should be lowercase imperative — flag clearly capitalized words.
+first_word=$(printf '%s' "$subject" | awk '{print $1}')
+case "$first_word" in
+    [A-Z]*) echo "[commit-msg] WARNING: subject should start lowercase ('$first_word' looks capitalized)." >&2 ;;
+esac
+
+exit 0

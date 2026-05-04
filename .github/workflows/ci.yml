@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [master_init, main, develop]
+  pull_request:
+    branches: [master_init, main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.os }} / ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04, macos-13]
+        build_type: [Debug, RelWithDebInfo]
+        include:
+          - os: windows-2022
+            preset_prefix: vs2022-x64
+            triplet: x64-windows
+          - os: ubuntu-22.04
+            preset_prefix: linux-gcc
+            triplet: x64-linux
+          - os: macos-13
+            preset_prefix: macos-clang
+            # macos-13 GitHub runner is Intel x64; preset default arm64-osx is overridden below.
+            triplet: x64-osx
+
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------------
+      # Map build_type → preset suffix (Debug→debug, RelWithDebInfo→release)
+      # ----------------------------------------------------------------------
+      - name: Resolve preset name
+        id: preset
+        shell: bash
+        run: |
+          case "${{ matrix.build_type }}" in
+            Debug)          suffix=debug ;;
+            RelWithDebInfo) suffix=release ;;
+            *) echo "::error::Unknown build_type ${{ matrix.build_type }}"; exit 1 ;;
+          esac
+          echo "name=${{ matrix.preset_prefix }}-${suffix}" >> "$GITHUB_OUTPUT"
+
+      # ----------------------------------------------------------------------
+      # vcpkg: use the preinstalled copy on each runner
+      # ----------------------------------------------------------------------
+      - name: Set VCPKG_ROOT (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -Append $env:GITHUB_ENV
+          "$env:VCPKG_INSTALLATION_ROOT" | Out-File -Append $env:GITHUB_PATH
+
+      - name: Set VCPKG_ROOT (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+          echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
+
+      - name: Create vcpkg binary cache directory
+        shell: bash
+        run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
+
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-
+            vcpkg-${{ matrix.triplet }}-
+
+      # ----------------------------------------------------------------------
+      # System deps (Qt / OCCT need lots of dev libs on Linux)
+      # ----------------------------------------------------------------------
+      - name: Install Ninja (Unix)
+        if: runner.os != 'Windows'
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Install Linux Qt/OCCT system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf-archive bison flex \
+            libxi-dev libxmu-dev libxkbcommon-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
+            libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
+            libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev \
+            libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \
+            libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-x11-dev \
+            libdbus-1-dev libfontconfig1-dev
+
+      - name: Install macOS Qt/OCCT system deps
+        if: runner.os == 'macOS'
+        run: brew install autoconf-archive bison
+
+      # ----------------------------------------------------------------------
+      # Configure / Build / Test using CMake presets
+      # ----------------------------------------------------------------------
+      - name: Configure
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            # macos-13 runner is Intel; override the arm64-osx preset default
+            cmake --preset ${{ steps.preset.outputs.name }} \
+                  -DVCPKG_TARGET_TRIPLET=x64-osx
+          else
+            cmake --preset ${{ steps.preset.outputs.name }}
+          fi
+
+      - name: Build
+        shell: bash
+        run: cmake --build --preset ${{ steps.preset.outputs.name }} --parallel
+
+      - name: Test
+        shell: bash
+        run: ctest --preset ${{ steps.preset.outputs.name }} --output-on-failure
+
+      # ----------------------------------------------------------------------
+      # Upload test reports / logs on failure
+      # ----------------------------------------------------------------------
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            build/${{ steps.preset.outputs.name }}/test-reports/
+            build/${{ steps.preset.outputs.name }}/Testing/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload vcpkg buildtree logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-logs-${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            ${{ env.VCPKG_ROOT }}/buildtrees/**/*.log
+            vcpkg/buildtrees/**/*.log
+          if-no-files-found: ignore
+          retention-days: 7

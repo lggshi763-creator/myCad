@@ -1,0 +1,97 @@
+name: Sanitizers
+
+on:
+  push:
+    branches: [master_init, main, develop]
+  pull_request:
+    branches: [master_init, main, develop]
+  schedule:
+    # Weekly slow-burn run (Mon 06:00 UTC) catches drift even when no PR fires
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: sanitizers-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
+  # OCCT triggers known false positives in container-overflow checker — see docs §8.11
+  ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:detect_container_overflow=0:strict_string_checks=1
+  UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1:report_error_type=1
+  LSAN_OPTIONS: suppressions=${{ github.workspace }}/.github/lsan.supp
+
+jobs:
+  sanitize:
+    name: Linux GCC + ${{ matrix.sanitizer }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [asan, ubsan]
+        include:
+          - sanitizer: asan
+            cmake_flag: -DMYCAD_ENABLE_ASAN=ON
+          - sanitizer: ubsan
+            cmake_flag: -DMYCAD_ENABLE_UBSAN=ON
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set VCPKG_ROOT
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+          echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
+
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Install Linux Qt/OCCT system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf-archive bison flex \
+            libxi-dev libxmu-dev libxkbcommon-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
+            libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
+            libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev \
+            libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \
+            libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-x11-dev \
+            libdbus-1-dev libfontconfig1-dev
+
+      - name: Create vcpkg binary cache directory
+        run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
+
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          # Sanitizer build is binary-incompatible with the plain Linux CI build,
+          # so use a separate cache key.
+          key: vcpkg-x64-linux-${{ matrix.sanitizer }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-x64-linux-${{ matrix.sanitizer }}-
+            vcpkg-x64-linux-
+
+      - name: Configure
+        run: cmake --preset linux-gcc-debug ${{ matrix.cmake_flag }}
+
+      - name: Build
+        run: cmake --build --preset linux-gcc-debug --parallel
+
+      - name: Test
+        run: ctest --preset linux-gcc-debug --output-on-failure
+
+      - name: Upload sanitizer logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-logs-${{ matrix.sanitizer }}
+          path: |
+            build/linux-gcc-debug/test-reports/
+            build/linux-gcc-debug/Testing/
+          if-no-files-found: ignore
+          retention-days: 14

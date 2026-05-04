@@ -1,0 +1,96 @@
+# myCad clang-tidy configuration.
+# Spec: docs/architecture/08-vs-toolchain.md §8.6.2
+# clang-tidy version: 17+
+
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-nodiscard
+
+# bugprone-* are correctness bugs — fail the build, never just warn.
+WarningsAsErrors: 'bugprone-*'
+
+# Only lint our own headers. Excludes vcpkg, _deps, build/, third-party.
+HeaderFilterRegex: '.*/mycad/.*\.(hpp|h)$'
+
+# clang-tidy needs to know our standard so concepts, ranges, etc. parse correctly.
+ExtraArgsBefore:
+  - '-std=c++20'
+
+FormatStyle: file
+
+CheckOptions:
+  # Naming conventions match docs §05 (PascalCase types, camelCase methods,
+  # member trailing underscore, UPPER_SNAKE constants).
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
+    value: '^[A-Z]+(_[A-Z]+)*_$'
+
+  # Function-size guard rails — long functions are a common smell.
+  - key: readability-function-cognitive-complexity.Threshold
+    value: '25'
+  - key: readability-function-size.LineThreshold
+    value: '120'
+
+  # Modernize — keep moves explicit but allow trivial defaulted ctors.
+  - key: modernize-use-default-member-init.UseAssignment
+    value: 'true'
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+
+  # cppcoreguidelines tweaks — interfaces with virtual must be marked properly.
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: 'true'
