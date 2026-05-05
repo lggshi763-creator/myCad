@@ -5,13 +5,13 @@
   "description": "Open-source parametric CAD",
   "homepage": "https://github.com/mycad/mycad",
   "license": "LGPL-3.0-or-later",
-  "builtin-baseline": "120deac3062162151622ca4860575a33844ba10b",
+  "builtin-baseline": "cf9b6f1a47898a888f9e86e346a9adfa68357380",
   "dependencies": [
     "opencascade",
     {
       "name": "qtbase",
       "default-features": false,
-      "features": ["gui", "widgets", "opengl", "openglwidgets"]
+      "features": ["gui", "widgets", "opengl"]
     },
     "qttools",
     "entt",
