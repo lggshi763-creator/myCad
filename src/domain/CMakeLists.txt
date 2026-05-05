@@ -1,8 +1,19 @@
-add_library(mycad_domain STATIC placeholder.cpp)
+add_library(mycad_domain STATIC
+    shared/Hello.cpp
+)
 add_library(mycad::domain ALIAS mycad_domain)
 
 target_compile_features(mycad_domain PUBLIC cxx_std_20)
+
+# Public headers live under shared/include/mycad/domain/ so consumers
+# always include with the project namespace prefix:
+#     #include <mycad/domain/Hello.hpp>
+# As more sub-modules (sketch, feature, assembly, constraint) land, each
+# brings its own <module>/include/mycad/domain/ tree appended here.
 target_include_directories(mycad_domain PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/shared/include>
 )
+
+# Domain layer is constrained to zero external dependencies (ADR-0002).
+# Only mycad::compile_options (warnings/sanitizer toggles) is allowed.
 target_link_libraries(mycad_domain PRIVATE mycad::compile_options)

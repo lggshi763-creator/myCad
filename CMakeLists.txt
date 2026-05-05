@@ -107,6 +107,7 @@ endif()
 
 if(MYCAD_ENABLE_BENCHMARKS)
     find_package(benchmark CONFIG REQUIRED)
+    add_subdirectory(benchmarks)
 endif()
 
 message(STATUS "myCad ${PROJECT_VERSION}  C++${CMAKE_CXX_STANDARD}  Build=${CMAKE_BUILD_TYPE}")

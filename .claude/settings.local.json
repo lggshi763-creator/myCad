@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Get-ChildItem E:\\\\myCad -Recurse -Directory -Force | Where-Object { $_.FullName -notmatch '\\\\.git' } | Select-Object FullName)"
+      "PowerShell(Get-ChildItem E:\\\\myCad -Recurse -Directory -Force | Where-Object { $_.FullName -notmatch '\\\\.git' } | Select-Object FullName)",
+      "Bash(cmake --preset my-vs2022-debug)",
+      "Bash(rm -rf \"E:/myCad/build/vs2022-x64-debug/vcpkg_installed\" \"E:/myCad/build/vs2022-x64-debug/CMakeCache.txt\" \"E:/myCad/build/vs2022-x64-debug/CMakeFiles\")",
+      "Bash(cmake --preset vs2022-x64-debug)",
+      "Bash(rm -rf \"E:/myCad/build/my-vs2022-debug/vcpkg_installed\" \"E:/myCad/build/my-vs2022-debug/CMakeCache.txt\" \"E:/myCad/build/my-vs2022-debug/CMakeFiles\")",
+      "Bash(rm -rf \"E:/myCad/build/my-vs2022-debug\")",
+      "Bash(xargs -I{} stat -c '%Y %n' {})",
+      "Bash(tasklist.exe /NH)",
+      "Bash(tasklist.exe /NH /FO CSV)",
+      "Bash(sort -k5 -hr)",
+      "Bash(tasklist.exe)",
+      "Bash(git mv *)",
+      "Bash(xargs -I{} ls -la {})",
+      "Bash(sort -k6,7)",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/vcpkg-rescue.ps1)",
+      "Bash(taskkill.exe //PID 19440 //F)",
+      "Bash(taskkill.exe //PID 22024 //F)",
+      "Bash(taskkill.exe //PID 12732 //F)",
+      "Bash(tasklist.exe -V)",
+      "Bash(cmake.exe --help)",
+      "Bash(grep -nE '^\\\\.vs|^/?out/|^out$' /e/myCad/.gitignore)",
+      "Bash(cmake.exe --list-presets)",
+      "Read(//c/Program Files/Microsoft Visual Studio/**)",
+      "Read(//c/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/**)",
+      "Read(//c/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/**)",
+      "Read(//c/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/**)",
+      "Read(//c/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.44.35207/**)",
+      "Bash(\"C:/Program Files \\(x86\\)/Microsoft Visual Studio/Installer/vswhere.exe\" -latest -property installationPath)"
     ]
   }
 }
