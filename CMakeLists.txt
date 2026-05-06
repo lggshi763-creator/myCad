@@ -110,6 +110,73 @@ if(MYCAD_ENABLE_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
+# ---------------------------------------------------------------------------
+# Documentation (Doxygen + Sphinx + Breathe)
+#
+# Optional. Detects tools at configure time; defines `docs` target only if
+# everything's available. Run with:
+#     cmake --build <build-dir> --target docs
+# Output:
+#     <source>/build/docs/doxygen/{html,xml}    (Doxygen)
+#     <source>/build/docs/sphinx                (Sphinx, consumes XML)
+# ---------------------------------------------------------------------------
+find_package(Doxygen QUIET)
+find_package(Python3 COMPONENTS Interpreter QUIET)
+
+set(MYCAD_DOCS_AVAILABLE OFF)
+set(MYCAD_DOCS_REASON    "")
+if(NOT DOXYGEN_FOUND)
+    set(MYCAD_DOCS_REASON "Doxygen not found")
+elseif(NOT Python3_FOUND)
+    set(MYCAD_DOCS_REASON "Python3 interpreter not found")
+else()
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -c "import sphinx; import breathe"
+        RESULT_VARIABLE _mycad_sphinx_check
+        OUTPUT_QUIET ERROR_QUIET
+    )
+    if(_mycad_sphinx_check EQUAL 0)
+        set(MYCAD_DOCS_AVAILABLE ON)
+    else()
+        set(MYCAD_DOCS_REASON
+            "python -m sphinx / breathe import failed (pip install sphinx breathe)")
+    endif()
+endif()
+
+if(MYCAD_DOCS_AVAILABLE)
+    set(_mycad_doxygen_out "${PROJECT_SOURCE_DIR}/build/docs/doxygen")
+    set(_mycad_sphinx_out  "${PROJECT_SOURCE_DIR}/build/docs/sphinx")
+    set(_mycad_sphinx_src  "${PROJECT_SOURCE_DIR}/docs/api-reference")
+
+    add_custom_target(docs-doxygen
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${_mycad_doxygen_out}"
+        COMMAND "${DOXYGEN_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/Doxyfile"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        COMMENT "[docs] Doxygen -> ${_mycad_doxygen_out}/{html,xml}"
+        VERBATIM
+    )
+
+    add_custom_target(docs-sphinx
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${_mycad_sphinx_out}"
+        COMMAND "${CMAKE_COMMAND}" -E env
+                "MYCAD_DOXYGEN_XML=${_mycad_doxygen_out}/xml"
+                "${Python3_EXECUTABLE}" -m sphinx
+                    -b html --keep-going
+                    "${_mycad_sphinx_src}" "${_mycad_sphinx_out}"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        DEPENDS docs-doxygen
+        COMMENT "[docs] Sphinx -> ${_mycad_sphinx_out}"
+        VERBATIM
+    )
+
+    add_custom_target(docs DEPENDS docs-sphinx)
+
+    message(STATUS "Docs target: enabled (target name 'docs')")
+else()
+    message(STATUS "Docs target: disabled (${MYCAD_DOCS_REASON})")
+endif()
+
 message(STATUS "myCad ${PROJECT_VERSION}  C++${CMAKE_CXX_STANDARD}  Build=${CMAKE_BUILD_TYPE}")
 message(STATUS "  Tests=${MYCAD_ENABLE_TESTING}  Benchmarks=${MYCAD_ENABLE_BENCHMARKS}")
 message(STATUS "  ASan=${MYCAD_ENABLE_ASAN}  UBSan=${MYCAD_ENABLE_UBSAN}")
+message(STATUS "  Docs=${MYCAD_DOCS_AVAILABLE}")

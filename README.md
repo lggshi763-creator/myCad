@@ -84,6 +84,69 @@ cmake --build --preset vs2022-debug
 
 详见 [docs/architecture/08-vs-toolchain.md](./docs/architecture/08-vs-toolchain.md)。
 
+## 本地生成 API 文档
+
+API reference 通过 **Doxygen + Sphinx + Breathe** 三件套生成：Doxygen 扫源码产出
+HTML 和 XML，Sphinx 拿 XML 渲染主站点。
+
+### 一次性安装
+
+| 工具 | Windows | Linux | macOS |
+|---|---|---|---|
+| Doxygen | `winget install doxygen` 或 [官网下载](https://www.doxygen.nl/download.html) | `apt install doxygen graphviz` | `brew install doxygen graphviz` |
+| Graphviz（可选，类图用） | `winget install graphviz` | 同上 | 同上 |
+| Sphinx + Breathe | `pip install sphinx breathe` | 同左 | 同左 |
+
+> 建议用项目专用 venv：`python -m venv .venv && .venv\Scripts\activate && pip install sphinx breathe`
+
+### 生成
+
+**通过 CMake target（推荐）**：
+
+```powershell
+# 配置阶段会探测 Doxygen / Python / sphinx / breathe；齐全时启用 docs target
+cmake --preset vs2022-x64-debug
+cmake --build --preset vs2022-x64-debug --target docs
+```
+
+构建结束后打开：
+
+```
+build/docs/sphinx/index.html       ← Sphinx 主站点（含 Breathe 渲染的 API）
+build/docs/doxygen/html/index.html ← Doxygen 原生 HTML（独立可读，含调用图）
+```
+
+**直接调用工具（跳过 CMake）**：
+
+```powershell
+# 1) 先生成 Doxygen XML
+doxygen Doxyfile
+
+# 2) 再让 Sphinx 消费它
+python -m sphinx -b html docs/api-reference build/docs/sphinx
+```
+
+### 文档注释规约（速查）
+
+```cpp
+/// @brief Greets a person by name.
+///
+/// 给定名字生成形如 "Hello, <name>!" 的问候字符串。Unicode 安全，
+/// 不会抛异常；空输入返回 "Hello, !"。
+///
+/// @param name 被问候者的名字（可为空、可含 Unicode）。
+/// @return 拼好的问候字符串。
+/// @see mycad::application::CommandBus
+std::string greet(std::string_view name);
+```
+
+风格要点：
+
+- 用 `///`（三斜杠），**不要**用 `/** ... */`。
+- 结构化标签用 `@brief` / `@param` / `@return` / `@throws` / `@see`，**不**用反斜杠形式。
+- **brief 一行用英文**，详细描述可中英文混排。
+- 自定义别名（在 `Doxyfile` 中已定义）：`@thread-safe`、`@noexcept-ok`、`@complexity{O(N)}`、`@si-units{millimeter}`。
+
 ## 文档地图
 
 | 文档 | 作用 |

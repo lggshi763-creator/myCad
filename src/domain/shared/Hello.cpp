@@ -4,14 +4,17 @@
 
 namespace mycad::domain {
 
-// Domain layer is constrained to zero external dependencies (ADR-0002).
-// Use only the C++ standard library — no fmt, no spdlog, no Qt.
+// ADR-0002: domain layer is zero-dependency. Implement with std::string
+// concatenation, NOT fmt::format / std::format / QStringBuilder.
 std::string greet(std::string_view name) {
+    constexpr std::string_view prefix{"Hello, "};
+    constexpr std::string_view suffix{"!"};
+
     std::string out;
-    out.reserve(name.size() + 9);  // "Hello, " + name + "!"
-    out.append("Hello, ");
+    out.reserve(prefix.size() + name.size() + suffix.size());
+    out.append(prefix);
     out.append(name);
-    out.append("!");
+    out.append(suffix);
     return out;
 }
 

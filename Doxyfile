@@ -1,0 +1,208 @@
+# =============================================================================
+# Doxyfile — myCad API documentation
+# =============================================================================
+#
+# Run from project root:    doxygen Doxyfile
+# Or via CMake target:      cmake --build build/<preset> --target docs
+#
+# Output:
+#   build/docs/doxygen/html/   — direct human-readable HTML (works standalone)
+#   build/docs/doxygen/xml/    — Doxygen XML, consumed by Sphinx + Breathe
+#
+# This file documents only non-default options. Anything not listed inherits
+# the Doxygen built-in default. Curated against Doxygen 1.10+.
+# =============================================================================
+
+# -- Project --------------------------------------------------------------
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = "myCad"
+PROJECT_NUMBER         = 0.0.1
+PROJECT_BRIEF          = "Open-source parametric CAD with event sourcing + AI-native design"
+
+# Output goes under build/, kept out of source tree.
+OUTPUT_DIRECTORY       = build/docs/doxygen
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = English
+
+# -- Comment style: /// + @param/@return/@throws ---------------------------
+# JAVADOC_AUTOBRIEF=YES  -> first sentence of /// block becomes brief summary
+#                          (so contributors who forget @brief still get clean output).
+# QT_AUTOBRIEF=NO        -> we don't use Qt's '!\brief' style.
+# MULTILINE_CPP_IS_BRIEF_DOC=NO -> consecutive /// lines are detail, not brief
+#                                  (until a blank /// line, which separates brief
+#                                  from detailed in our bilingual convention).
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = NO
+MULTILINE_CPP_IS_BRIEF_DOC = NO
+
+# Aliases convenient for our codebase. Use them as @noexcept-ok, @si-units, etc.
+# in source comments to convey intent that Doxygen doesn't have a tag for.
+ALIASES                = "noexcept-ok=\par Exception safety:\n No exceptions thrown." \
+                         "si-units{1}=\par Units:\n SI: \1" \
+                         "complexity{1}=\par Complexity:\n \1" \
+                         "thread-safe=\par Thread safety:\n Thread-safe (re-entrant, lock-free)."
+
+# -- What to scan ---------------------------------------------------------
+INPUT                  = src/
+INPUT_ENCODING         = UTF-8
+RECURSIVE              = YES
+FILE_PATTERNS          = *.cpp *.cxx *.cc *.hpp *.hxx *.h *.inl
+
+# Skip generated, third-party, build artifacts, placeholders.
+EXCLUDE                =
+EXCLUDE_PATTERNS       = */build/*           \
+                         */out/*             \
+                         */vcpkg_installed/* \
+                         */_deps/*           \
+                         */CMakeFiles/*      \
+                         */placeholder.cpp   \
+                         */placeholder.hpp   \
+                         */placeholder_test.cpp \
+                         */moc_*.cpp         \
+                         */ui_*.h            \
+                         */qrc_*.cpp
+EXCLUDE_SYMBOLS        = std::* boost::* internal::* detail::*
+
+# -- Extraction policy ----------------------------------------------------
+# Default: only document things that have a Doxygen comment.
+# Set EXTRACT_ALL=YES early on if you want every public symbol shown
+# (warns on anything undocumented).
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_PRIV_VIRTUAL   = YES
+EXTRACT_PACKAGE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_LOCAL_METHODS  = NO
+EXTRACT_ANON_NSPACES   = NO
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_IN_BODY_DOCS      = NO
+
+INTERNAL_DOCS          = NO
+CASE_SENSE_NAMES       = SYSTEM
+SHOW_INCLUDE_FILES     = YES
+SHOW_GROUPED_MEMB_INC  = NO
+FORCE_LOCAL_INCLUDES   = NO
+INLINE_INFO            = YES
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = NO
+SORT_MEMBERS_CTORS_1ST = YES
+SORT_GROUP_NAMES       = NO
+SORT_BY_SCOPE_NAME     = NO
+
+GENERATE_TODOLIST      = YES
+GENERATE_TESTLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST= YES
+
+# -- Warnings -------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = NO
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = build/docs/doxygen/warnings.log
+
+# -- C++ specifics --------------------------------------------------------
+BUILTIN_STL_SUPPORT    = YES
+CPP_CLI_SUPPORT        = NO
+SIP_SUPPORT            = NO
+IDL_PROPERTY_SUPPORT   = YES
+DISTRIBUTE_GROUP_DOC   = NO
+GROUP_NESTED_COMPOUNDS = NO
+SUBGROUPING            = YES
+INLINE_GROUPED_CLASSES = NO
+INLINE_SIMPLE_STRUCTS  = NO
+TYPEDEF_HIDES_STRUCT   = NO
+
+# Pre-processing — keep simple, don't fully expand templates.
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+EXPAND_ONLY_PREDEF     = NO
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           =
+PREDEFINED             = DOXYGEN_DOCUMENTING=1 \
+                         __cplusplus=202002L \
+                         MYCAD_API= \
+                         Q_DECL_OVERRIDE=override \
+                         Q_DECL_FINAL=final \
+                         Q_OBJECT=
+
+SKIP_FUNCTION_MACROS   = YES
+
+# -- HTML output ----------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE        = AUTO_LIGHT      # respects browser dark/light preference
+HTML_DYNAMIC_MENUS     = YES
+HTML_DYNAMIC_SECTIONS  = YES
+HTML_INDEX_NUM_ENTRIES = 100
+HTML_TIMESTAMP         = NO
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+TREEVIEW_WIDTH         = 280
+ENUM_VALUES_PER_LINE   = 1
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+EXTERNAL_SEARCH        = NO
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+MATHJAX_FORMAT         = HTML-CSS
+
+# -- XML output (for Sphinx + Breathe) ------------------------------------
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+XML_PROGRAMLISTING     = YES
+XML_NS_MEMB_FILE_SCOPE = NO
+
+# -- Other formats: off (we generate HTML + XML only) ---------------------
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_DOCBOOK       = NO
+GENERATE_AUTOGEN_DEF   = NO
+GENERATE_PERLMOD       = NO
+
+# -- Source browser -------------------------------------------------------
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+SOURCE_TOOLTIPS        = YES
+USE_HTAGS              = NO
+VERBATIM_HEADERS       = YES
+CLANG_ASSISTED_PARSING = NO
+
+# -- Diagrams (graphviz) --------------------------------------------------
+# Set to NO if dot is unavailable; output stays usable but lacks diagrams.
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 0
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = NO
+UML_LIMIT_NUM_FIELDS   = 10
+TEMPLATE_RELATIONS     = NO
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO    # very slow on large code; turn on per-target with @callgraph
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_GRAPH_MAX_NODES    = 80
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_TRANSPARENT        = NO
+DOT_MULTI_TARGETS      = YES
+GENERATE_LEGEND        = YES
+DOT_CLEANUP            = YES

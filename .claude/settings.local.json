@@ -28,7 +28,11 @@
       "Read(//c/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/**)",
       "Read(//c/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/**)",
       "Read(//c/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.44.35207/**)",
-      "Bash(\"C:/Program Files \\(x86\\)/Microsoft Visual Studio/Installer/vswhere.exe\" -latest -property installationPath)"
+      "Bash(\"C:/Program Files \\(x86\\)/Microsoft Visual Studio/Installer/vswhere.exe\" -latest -property installationPath)",
+      "Bash(curl.exe -x http://127.0.0.1:7897 --ssl-no-revoke -s -o /dev/null --max-time 10 -w \"github.com via proxy http=%{http_code} time=%{time_total}s\\\\n\" https://github.com)",
+      "Bash(git config *)",
+      "Bash(time git *)",
+      "Bash(xargs ls *)"
     ]
   }
 }
