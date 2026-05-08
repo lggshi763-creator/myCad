@@ -42,6 +42,10 @@ ADR（Architecture Decision Record）= 一个**轻量、不可变、可追溯**�
 | [ADR-0007](./ADR-0007-entt-as-ecs.md) | EnTT 作为 ECS 框架 | Accepted | 第三方依赖 |
 | [ADR-0008](./ADR-0008-visual-studio-toolchain.md) | **Visual Studio 2022 作为主 IDE 与构建环境** | Accepted | 工具链 |
 | [ADR-0009](./ADR-0009-self-host-roadmap.md) | **第三方依赖隔离与长期自研路线** | Accepted | 长期独立性 |
+| [ADR-0010](./ADR-0010-drawing-domain-boundary.md) | 工程图作为独立 Domain 聚合 | Proposed | 架构边界 / drawing |
+| [ADR-0011](./ADR-0011-dxf-library-selection.md) | DXF / DWG 库选型（libdxfrw，不支持 DWG） | Proposed | 第三方依赖 / drawing |
+| [ADR-0012](./ADR-0012-drawing-recognition-strategy.md) | 工程图识别走 VLM API（Phase 2 起） | Proposed | AI / drawing |
+| [ADR-0013](./ADR-0013-value-object-design-philosophy.md) | 值对象设计哲学（传递 / 不变性 / 比较 / 容差 / 单位等 9 条） | Proposed | domain / 设计哲学 |
 
 ## 状态流转
 

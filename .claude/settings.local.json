@@ -32,7 +32,21 @@
       "Bash(curl.exe -x http://127.0.0.1:7897 --ssl-no-revoke -s -o /dev/null --max-time 10 -w \"github.com via proxy http=%{http_code} time=%{time_total}s\\\\n\" https://github.com)",
       "Bash(git config *)",
       "Bash(time git *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Read(//c/Users/XShi/.claude/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File E:/myCad/tools/check-style.ps1 -QuietOK"
+          }
+        ]
+      }
     ]
   }
 }

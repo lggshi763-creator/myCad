@@ -248,9 +248,42 @@
 | 性能测试：1000 事件文档打开 < 2s | 🟧 + 🟩 | 2d |
 | 优化（Tracy profile + 修热点） | 🟧 + 🟩 | 1d |
 
-#### 主题 D：发布准备（2-3 个 sprint，~4-6 周）
+#### 主题 D：工程图生成 MVP（3 个 sprint，~6 周）
 
-**Sprint 1.D1（Week 35-36）：互操作（最小可用）**
+> **新增** — 见 [ADR-0010](../adr/ADR-0010-drawing-domain-boundary.md) / [ADR-0011](../adr/ADR-0011-dxf-library-selection.md) / [docs/proposals/2026-W19-expansion.md §2](../proposals/2026-W19-expansion.md)。
+> 这是 v0.1 进入 B 端工业市场的硬门槛 —— 用户只能输出 3D 模型不能给 2D 工程图等于不能进车间 / 不能签合同。
+
+**Sprint 1.D1（Week 35-36）：Drawing 聚合 + Sheet 基础**
+| 任务 | 标签 | 估时 |
+|---|---|---|
+| 实现 Drawing / Sheet / View 值对象 + 不变量校验 | 🟧 + 🟦 | 3d |
+| 实现 SheetCreated / ViewProjected 事件 + replay | 🟧 | 2d |
+| 引入 vcpkg 依赖：libdxfrw（按 ADR-0011 选型） | 🟧 + 🟩 | 0.5d |
+| 单测覆盖 ≥ 90% | 🟧 | 1d |
+| 主窗口加 "工程图" tab（占位） | 🟧 | 1d |
+
+**Sprint 1.D2（Week 37-38）：投影引擎 + 标注**
+| 任务 | 标签 | 估时 |
+|---|---|---|
+| 实现 IDrawingProjectionPort + OcctProjectionAdapter（OCCT HLR 隐藏线消除） | 🟧 + 🟦 | 4d |
+| 实现 Dimension / Annotation 值对象 + 事件 | 🟧 | 2d |
+| 实现 PlaceDimension / AddAnnotation 命令 + handler | 🟧 + 🟦 | 2d |
+| 单测：单 view 投影 + 3 类标注（线性 / 直径 / 角度） | 🟧 | 1d |
+
+**Sprint 1.D3（Week 39-40）：导出 + UI 集成**
+| 任务 | 标签 | 估时 |
+|---|---|---|
+| 实现 DxfWriter（IDrawingExportPort 的 DXF 实现，libdxfrw） | 🟧 | 2d |
+| 实现 PdfRenderer（Qt6::PrintSupport） | 🟧 | 2d |
+| 实现"切到工程图视图" + 视图列表面板 + 标注工具栏 | 🟧 + 🟦 UX | 3d |
+| 端到端：建模 → 自动正三视图 → 加 3 个尺寸 → 导出 DXF | 🟩 | 1d |
+| 兼容性矩阵：DxfWriter 输出 → AutoCAD 2024 / SolidWorks 2024 / FreeCAD 1.x 都能正确读取 | 🟩 | 1d |
+
+**主题 D 交付物**：用户能在 myCad 里建模、自动生成正三视图工程图、添加基础尺寸、导出 DXF/PDF。BOM + 多视图 + 剖视图等高级特性留到 Phase 2 工程图主题。
+
+#### 主题 E：发布准备（2-3 个 sprint，~4-6 周）
+
+**Sprint 1.E1（Week 41-42）：互操作（最小可用）**
 | 任务 | 标签 | 估时 |
 |---|---|---|
 | 实现 IFormatHandler + StlHandler（导出 STL） | 🟧 + 🟦 | 3d |
@@ -259,15 +292,15 @@
 | 实现"截图导出 PNG" | 🟧 | 1d |
 | 实现 CHANGELOG.md + 自动 changelog 工具 | 🟦 | 1d |
 
-**Sprint 1.D2（Week 37-38）：稳定性 + 文档**
+**Sprint 1.E2（Week 43-44）：稳定性 + 文档**
 | 任务 | 标签 | 估时 |
 |---|---|---|
 | 跑 100 次随机 fuzz 测试，修复发现的 bug | 🟧 + 🟩 | 4d |
 | ASan + UBSan 全套测试通过 | 🟩 | 2d |
-| 写用户手册（Sphinx，覆盖 9 步剧本） | 🟦 + 🟧 | 3d |
+| 写用户手册（Sphinx，覆盖 9 步剧本 + 工程图章节） | 🟦 + 🟧 | 3d |
 | 录制 5 分钟"快速上手"视频 | 🟩 | 1d |
 
-**Sprint 1.D3（Week 39-40）：v0.1.0 发布**
+**Sprint 1.E3（Week 45-46）：v0.1.0 发布**
 | 任务 | 标签 | 估时 |
 |---|---|---|
 | 准备 Linux AppImage 打包 | 🟧 + 🟩 | 2d |
@@ -313,20 +346,24 @@
 ### 核心功能目标
 
 1. **装配体**：多零件文件引用、装配约束、爆炸图
-2. **工程图**：三视图自动生成、剖视图、尺寸标注、DXF 导出
-3. **更多特征**：倒角、圆角、抽壳、扫掠、放样、阵列、镜像
-4. **STEP / IGES / DXF 导入导出**：达到 FreeCAD 7 成水平
-5. **插件市场基础设施**：插件签名、版本管理、自动更新
-6. **AI 功能 v1**：自然语言 → 草图（基础能力）
-7. **协同功能预研**：完成事件偏序设计的实战验证（不发布）
-8. **稳定性**：MTBF ≥ 8 小时持续使用无崩溃
+2. **工程图增强**：剖视图、局部放大、装配工程图（基础三视图 + 尺寸已在 Phase 1.D 完成）
+3. **BOM（明细栏）**：装配体自动抽取明细栏，导出 Excel / DXF 表格
+4. **图纸识别（AI-native 差异化）**：PDF / 扫描图 → 重建 3D 草图（详见 [ADR-0012](../adr/ADR-0012-drawing-recognition-strategy.md)）
+5. **更多特征**：倒角、圆角、抽壳、扫掠、放样、阵列、镜像
+6. **STEP / IGES / DXF 导入导出**：达到 FreeCAD 7 成水平
+7. **插件市场基础设施**：插件签名、版本管理、自动更新
+8. **AI 功能 v1**：自然语言 → 草图（基础能力）
+9. **协同功能预研**：完成事件偏序设计的实战验证（不发布）
+10. **稳定性**：MTBF ≥ 8 小时持续使用无崩溃
 
 ### 主题划分（不再细化到 sprint，由 Phase 1 retrospective 后调整）
 
 | 主题 | 估时 | 主要工具 | 关键交付 |
 |---|---|---|---|
 | 装配体 BC | 6 周 | 🟦 + 🟧 | Assembly 聚合、装配约束求解、零件引用 |
-| 工程图 BC | 8 周 | 🟦 + 🟧 + 🟩 UX | Drawing 聚合、视图生成、标注、DXF |
+| 工程图增强（剖视、局部放大、装配工程图、BOM） | 6 周 | 🟦 + 🟧 + 🟩 UX | 高级 view / BomGenerated 事件 / Excel 导出（基础工程图已在 Phase 1.D 完成）|
+| **图纸识别 MVP**（新增） | 8 周 | 🟧 + 🟩 模型评估 | 单张 PDF/扫描 → 重建 3D 草图（无约束求解）；按 [ADR-0012](../adr/ADR-0012-drawing-recognition-strategy.md) 走 VLM API |
+| **图纸识别增强 + 智能约束**（新增） | 6 周 | 🟧 + 🟩 + 🟦 | 多视图融合 / GD&T 标注识别 / 自动 sketch 重建 + AI 约束建议 |
 | 高级特征（倒角/圆角/抽壳/扫掠/放样） | 8 周 | 🟧 + 🟦 算法选型 | 5 类新特征 |
 | 阵列与镜像 | 4 周 | 🟧 | 线性/环形/镜像，含装配级 |
 | STEP / IGES / DXF 完善 | 6 周 | 🟧 + 🟩 测试 | 通过 STEP AP242 测试套件 70%+ |

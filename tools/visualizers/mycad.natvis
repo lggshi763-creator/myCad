@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  myCad Visual Studio debugger visualizers.
+  Spec: docs/architecture/08-vs-toolchain.md §8.4.2
+
+  How VS picks this up:
+    Visual Studio scans every directory under the source tree (and the build
+    binary dir) for *.natvis files at debug-session start. No CMake wiring is
+    required — placing the file at tools/visualizers/mycad.natvis is enough.
+
+    If you ever need to force-load it (e.g., when debugging a target whose
+    source dir doesn't include this file), add:
+        target_sources(<target> PRIVATE
+            ${PROJECT_SOURCE_DIR}/tools/visualizers/mycad.natvis)
+
+  How to add a new entry:
+    1. Define the type in src/.
+    2. In a debug session, expand a variable of that type in the Watch / Locals
+       window — note the field names VS shows (e.g., "_Mypair._Myval2._Mylast"
+       for std::vector<T> internals — those are MSVC STL-specific).
+    3. Add a <Type Name="..."> below following the pattern.
+    4. Save and continue debugging — VS reloads natvis on the fly without
+       restarting the session (Tools -> Options -> Debugging -> 'Enable Edit
+       and Continue' must be on, but is by default).
+
+  Notes:
+    - Most types referenced below DO NOT EXIST YET. They land in Sprint 0.2+.
+      The entries are commented out (`<!- - ... - ->`) until then. Uncomment
+      individual entries as the corresponding type ships.
+    - When MSVC STL internals change between toolset versions, the
+      `entities_._Mypair._Myval2.…` style accessors can break. If a visualizer
+      stops working after a VS update, fall back to `<Expand HideRawView="true">`
+      with simpler `<Item>` elements instead of computing sizes by hand.
+-->
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <!-- ====================================================================
+       Domain layer (Sprint 0.2)
+       ==================================================================== -->
+
+  <!--
+    BRepHandle — opaque handle into the OCCT topology cache.
+    Activate when src/domain/shared/include/mycad/domain/BRepHandle.hpp lands.
+  -->
+  <!--
+  <Type Name="mycad::domain::BRepHandle">
+    <DisplayString Condition="id == 0">BRepHandle{{ invalid }}</DisplayString>
+    <DisplayString>BRepHandle{{ id={id} }}</DisplayString>
+    <Expand>
+      <Item Name="id">id</Item>
+      <Item Name="generation">generation</Item>
+    </Expand>
+  </Type>
+  -->
+
+  <!--
+    EventId — ULID-encoded immutable event identity (Sprint 0.2 / 0.3).
+    `value` is expected to be a std::array<unsigned char,16> or similar 128-bit
+    ULID. The `,sb` format specifier renders bytes as hex pairs.
+  -->
+  <!--
+  <Type Name="mycad::domain::EventId">
+    <DisplayString>EventId{{ {value,sb} }}</DisplayString>
+    <Expand>
+      <Item Name="raw bytes">value</Item>
+    </Expand>
+  </Type>
+  -->
+
+  <!--
+    AggregateId / SketchId / FeatureId — strong-typed wrappers around UUID.
+    All follow the same shape: a single `value` (std::array<uint8_t,16>) plus
+    a phantom tag type for compile-time disambiguation.
+  -->
+  <!--
+  <Type Name="mycad::domain::AggregateId">
+    <DisplayString>AggregateId{{ {value,sb} }}</DisplayString>
+  </Type>
+  <Type Name="mycad::domain::SketchId">
+    <DisplayString>SketchId{{ {value,sb} }}</DisplayString>
+  </Type>
+  -->
+
+  <!--
+    Version — monotonically increasing aggregate revision counter.
+  -->
+  <!--
+  <Type Name="mycad::domain::Version">
+    <DisplayString Condition="value == 0">Version{{ initial }}</DisplayString>
+    <DisplayString>v{value}</DisplayString>
+  </Type>
+  -->
+
+  <!-- ====================================================================
+       Geometry value objects (Sprint 0.2)
+       ==================================================================== -->
+
+  <!--
+  <Type Name="mycad::domain::Point2D">
+    <DisplayString>({x,g}, {y,g})</DisplayString>
+  </Type>
+  <Type Name="mycad::domain::Point3D">
+    <DisplayString>({x,g}, {y,g}, {z,g})</DisplayString>
+  </Type>
+  <Type Name="mycad::domain::Vector3D">
+    <DisplayString>&lt;{x,g}, {y,g}, {z,g}&gt;</DisplayString>
+  </Type>
+  <Type Name="mycad::domain::Axis3D">
+    <DisplayString>Axis{{ origin=({origin.x,g},{origin.y,g},{origin.z,g}), dir=&lt;{direction.x,g},{direction.y,g},{direction.z,g}&gt; }}</DisplayString>
+  </Type>
+  <Type Name="mycad::domain::BoundingBox">
+    <DisplayString Condition="empty">BoundingBox{{ empty }}</DisplayString>
+    <DisplayString>BoundingBox{{ min=({min.x,g},{min.y,g},{min.z,g}), max=({max.x,g},{max.y,g},{max.z,g}) }}</DisplayString>
+  </Type>
+  -->
+
+  <!-- ====================================================================
+       Aggregates (Sprint 0.3+)
+       ==================================================================== -->
+
+  <!--
+    Sketch aggregate — display id + entity count + version. The expression
+    inside ${...} for the entity count uses MSVC STL internals which may
+    change between v14.50 and future toolsets; verify after every VS update.
+  -->
+  <!--
+  <Type Name="mycad::domain::sketch::Sketch">
+    <DisplayString>
+      Sketch{{ id={id_,sb}, entities={entities_._Mypair._Myval2._Mylast - entities_._Mypair._Myval2._Myfirst}, version={version_.value} }}
+    </DisplayString>
+    <Expand>
+      <Item Name="id">id_</Item>
+      <Item Name="version">version_</Item>
+      <Item Name="entities">entities_</Item>
+      <Item Name="constraints">constraints_</Item>
+    </Expand>
+  </Type>
+  -->
+
+  <!-- ====================================================================
+       tl::expected — gives a useful summary instead of raw discriminator
+       Activate when first usage lands (likely Sprint 0.2 IGeometryPort).
+       ==================================================================== -->
+
+  <!--
+  <Type Name="tl::expected&lt;*,*&gt;">
+    <DisplayString Condition="m_has_val">Ok{{ {m_val} }}</DisplayString>
+    <DisplayString>Err{{ {m_unexpect.m_val} }}</DisplayString>
+    <Expand>
+      <Item Name="value" Condition="m_has_val">m_val</Item>
+      <Item Name="error" Condition="!m_has_val">m_unexpect.m_val</Item>
+    </Expand>
+  </Type>
+  -->
+
+  <!-- ====================================================================
+       Active visualizers below this line — uncomment must be paired with
+       a real type definition merged to master.
+       ==================================================================== -->
+
+  <!--
+    Marker entry. Lets you confirm natvis is being loaded by setting a
+    breakpoint inside greet() and inspecting any local — VS will auto-detect
+    this file, so no special treatment is needed. Remove once the first real
+    type lands in Sprint 0.2.
+  -->
+
+</AutoVisualizer>

@@ -98,4 +98,52 @@ if [ "${#violations[@]}" -gt 0 ]; then
 fi
 
 log "All staged C/C++ files are properly formatted."
+
+# ---------------------------------------------------------------------------
+# Soft check: TODO comment format (advisory, never blocks commit)
+#
+# Convention (CLAUDE.md §6.3 + docs/proposals/2026-W19-expansion.md §4):
+#   TODO(@<owner>, <sprint-X.Y or issue-N>): <text>
+#
+# Anything matching just /TODO/ or /FIXME/ or /XXX/ that doesn't have an
+# `@<owner>, <sprint-or-issue>` annotation gets a warning. We don't block
+# the commit — just nudge the developer to either:
+#   - own it (add @owner + sprint),
+#   - file it as inbox / issue,
+#   - delete it.
+# ---------------------------------------------------------------------------
+todo_warnings=()
+todo_pattern_loose='\b(TODO|FIXME|XXX)\b'
+todo_pattern_strict='\b(TODO|FIXME|XXX)\(@[A-Za-z0-9_-]+,[[:space:]]*(sprint-[0-9]+\.[0-9]+|issue-[0-9]+)\)'
+
+for f in "${files[@]}"; do
+    [ -f "$f" ] || continue
+    # Inspect only lines that were ADDED in this commit (not pre-existing TODOs).
+    while IFS=: read -r ln content; do
+        # ln is the line number, content is the line itself.
+        if echo "$content" | grep -qE "$todo_pattern_loose" \
+           && ! echo "$content" | grep -qE "$todo_pattern_strict"; then
+            todo_warnings+=("$f:$ln: $(echo "$content" | sed 's/^[[:space:]]*//' | cut -c1-80)")
+        fi
+    done < <(git diff --cached --unified=0 -- "$f" \
+              | awk '/^@@/{
+                       match($0, /\+([0-9]+)(,[0-9]+)?/, m); ln=m[1]-1; next
+                     }
+                     /^\+/ && !/^\+\+\+/ { ln++; print ln":"substr($0,2) }
+                     /^[^+-]/ { ln++ }')
+done
+
+if [ "${#todo_warnings[@]}" -gt 0 ]; then
+    log ""
+    log "ADVISORY: ${#todo_warnings[@]} TODO/FIXME/XXX line(s) without @<owner>,<sprint|issue>:"
+    for w in "${todo_warnings[@]}"; do
+        log "  - $w"
+    done
+    log ""
+    log "Convention: TODO(@username, sprint-0.2): <text>"
+    log "Or:         TODO(@username, issue-42): <text>"
+    log ""
+    log "Not blocking commit. Either own it, file it, or delete it."
+fi
+
 exit 0

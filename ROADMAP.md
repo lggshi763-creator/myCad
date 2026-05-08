@@ -5,8 +5,8 @@
 | Phase | 估时 | 目标 | 状态 |
 |---|---|---|---|
 | **Phase 0** 地基 | ~3 个月 | 架构骨架 + 3D 立方体 + 保存重开 | 🚧 In Progress |
-| **Phase 1** MVP 草图建模 | ~6-9 个月 | 草图 → 拉伸 → 保存 → 修改联动 → 撤销，v0.1 公开发布 | ⏳ Planned |
-| **Phase 2** 完整 CAD | ~18-24 个月 | 装配体 + 工程图 + STEP/IGES/DXF + 插件市场 + AI v1，v1.0 发布 | ⏳ Planned |
+| **Phase 1** MVP 草图建模 + 基础工程图 | ~7-9 个月 | 草图 → 拉伸 → 保存 → 撤销 → **2D 工程图导出 DXF/PDF**，v0.1 公开发布 | ⏳ Planned |
+| **Phase 2** 完整 CAD + AI 识别 | ~18-24 个月 | 装配体 + 工程图增强 + **图纸识别（VLM）** + STEP/IGES/DXF + 插件市场 + AI v1，v1.0 发布 | ⏳ Planned |
 | **Phase 3** 向 CAM/CAE 扩展 | 24+ 个月 | 第三方插件接入 CAM/CAE；架构演进 | ⏳ Planned |
 
 ---

@@ -17,3 +17,9 @@ target_include_directories(mycad_domain PUBLIC
 # Domain layer is constrained to zero external dependencies (ADR-0002).
 # Only mycad::compile_options (warnings/sanitizer toggles) is allowed.
 target_link_libraries(mycad_domain PRIVATE mycad::compile_options)
+
+# ---------------------------------------------------------------------------
+# Drawing sub-module — sibling bounded context within the domain layer.
+# Depends on mycad::domain (shared types, events). See ADR-0010.
+# ---------------------------------------------------------------------------
+add_subdirectory(drawing)
