@@ -46,13 +46,11 @@ jobs:
           echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
           echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
 
-      - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - name: Install Linux Qt/OCCT system deps
+      - name: Install Linux Qt/OCCT system deps + Ninja
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            ninja-build \
             autoconf-archive bison flex \
             libxi-dev libxmu-dev libxkbcommon-dev \
             libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
@@ -61,6 +59,7 @@ jobs:
             libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \
             libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-x11-dev \
             libdbus-1-dev libfontconfig1-dev
+          ninja --version  # fail fast if not on PATH
 
       - name: Create vcpkg binary cache directory
         run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"

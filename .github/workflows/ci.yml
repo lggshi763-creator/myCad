@@ -86,17 +86,18 @@ jobs:
             vcpkg-${{ matrix.triplet }}-
 
       # ----------------------------------------------------------------------
-      # System deps (Qt / OCCT need lots of dev libs on Linux)
+      # System deps (Qt / OCCT need lots of dev libs on Linux + macOS).
+      # Ninja is required by the linux-gcc-* / macos-clang-* presets'
+      # generator (CMakePresets.json sets `"generator": "Ninja"` for those).
+      # We install via the OS package manager rather than a third-party
+      # action — it's bulletproof and PATH is auto-set.
       # ----------------------------------------------------------------------
-      - name: Install Ninja (Unix)
-        if: runner.os != 'Windows'
-        uses: seanmiddleditch/gha-setup-ninja@v5
-
-      - name: Install Linux Qt/OCCT system deps
+      - name: Install Linux Qt/OCCT system deps + Ninja
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            ninja-build \
             autoconf-archive bison flex \
             libxi-dev libxmu-dev libxkbcommon-dev \
             libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
@@ -105,10 +106,13 @@ jobs:
             libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \
             libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-x11-dev \
             libdbus-1-dev libfontconfig1-dev
+          ninja --version  # fail fast if not on PATH
 
-      - name: Install macOS Qt/OCCT system deps
+      - name: Install macOS Qt/OCCT system deps + Ninja
         if: runner.os == 'macOS'
-        run: brew install autoconf-archive bison
+        run: |
+          brew install ninja autoconf-archive bison
+          ninja --version  # fail fast if not on PATH
 
       # ----------------------------------------------------------------------
       # Configure / Build / Test using CMake presets
