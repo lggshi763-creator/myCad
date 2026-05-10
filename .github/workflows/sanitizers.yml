@@ -16,6 +16,10 @@ concurrency:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
+  # Cap vcpkg parallelism — see ci.yml for rationale. Sanitizer builds use
+  # even more memory than plain Debug, so VCPKG_MAX_CONCURRENCY is set to 2
+  # to keep qtbase / opencascade link steps from OOMing the 7 GB runner.
+  VCPKG_MAX_CONCURRENCY: 2
   # OCCT triggers known false positives in container-overflow checker — see docs §8.11
   ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:detect_container_overflow=0:strict_string_checks=1
   UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1:report_error_type=1

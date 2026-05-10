@@ -36,6 +36,12 @@ jobs:
 
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
+      # Linux GitHub runners have 4 cores but only 7 GB RAM. qtbase's
+      # link step (libQt6Widgets / libQt6Network) can spike to 4-5 GB
+      # per linker. With 4-way parallelism, peak memory > 16 GB → OOM.
+      # Capping concurrency to 2 keeps peak under 10 GB. Slower (~+15
+      # min on first qtbase build) but reliable.
+      VCPKG_MAX_CONCURRENCY: 2
 
     steps:
       - name: Checkout
@@ -169,6 +175,17 @@ jobs:
       - name: Configure
         shell: bash
         run: |
+          # Defense-in-depth diagnostics so any future "X not found"
+          # errors from cmake are traceable to a missing tool / bad PATH.
+          echo "[diag] Runner OS = ${{ runner.os }}"
+          echo "[diag] PATH = $PATH"
+          which cmake || echo "[diag] cmake NOT on PATH"
+          which ninja || echo "[diag] ninja NOT on PATH"
+          ninja --version 2>/dev/null || echo "[diag] ninja --version failed"
+          cmake --version | head -1
+          echo "[diag] vcpkg HEAD:"
+          (cd "$VCPKG_ROOT" && git log -1 --format='%H %s')
+
           if [ "${{ runner.os }}" = "macOS" ]; then
             # macos-13 runner is Intel; override the arm64-osx preset default
             cmake --preset ${{ steps.preset.outputs.name }} \
