@@ -46,8 +46,17 @@ jobs:
           echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
           echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
 
+      # Sync runner's preinstalled vcpkg so vcpkg.json's builtin-baseline
+      # commit is reachable. Same rationale as ci.yml.
+      - name: Sync vcpkg to upstream master
+        run: |
+          cd "$VCPKG_INSTALLATION_ROOT"
+          sudo git fetch --unshallow 2>/dev/null || sudo git fetch origin
+          git log -1 --format='%H %s'
+
       - name: Install Linux Qt/OCCT system deps + Ninja
         run: |
+          set -x  # echo every command so logs are self-explanatory
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ninja-build \
@@ -59,7 +68,11 @@ jobs:
             libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \
             libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-x11-dev \
             libdbus-1-dev libfontconfig1-dev
-          ninja --version  # fail fast if not on PATH
+          # Diagnostics to make any 'ninja not found' issue obvious in logs.
+          which ninja
+          ls -la /usr/bin/ninja
+          ninja --version
+          echo "PATH=$PATH"
 
       - name: Create vcpkg binary cache directory
         run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
@@ -76,7 +89,14 @@ jobs:
             vcpkg-x64-linux-
 
       - name: Configure
-        run: cmake --preset linux-gcc-debug ${{ matrix.cmake_flag }}
+        run: |
+          # Defense-in-depth diagnostics — if cmake fails to find ninja,
+          # logs immediately show whether ninja is on PATH at this step.
+          which ninja || echo "[diag] ninja NOT on PATH at Configure step!"
+          ninja --version || echo "[diag] ninja --version failed"
+          echo "[diag] PATH=$PATH"
+          echo "[diag] CMAKE_GENERATOR env=${CMAKE_GENERATOR:-unset}"
+          cmake --preset linux-gcc-debug ${{ matrix.cmake_flag }}
 
       - name: Build
         run: cmake --build --preset linux-gcc-debug --parallel

@@ -59,6 +59,14 @@
   - 候选解：随每个值对象 PR 同步取消注释 + 调整字段名（MSVC STL 内部字段命名可能和样板有出入）
   - 风险：低（natvis 不影响构建，只是调试体验）
 
+### CI / vcpkg baseline 维护
+
+- [ ] **Baseline 维护策略**：评估"runner 自带 vcpkg + git fetch"够不够稳定，还是需要切到"CI 自己 checkout vcpkg 到固定 commit"
+  - 上下文：W19 ci.yml 撞 baseline `cf9b6f1a...` 在 runner vcpkg 镜像里找不到的错误
+  - 已上方案：在 ci.yml + sanitizers.yml 加 `git fetch --unshallow` 兜底（W19 末尾 push）
+  - 候选解：如果 fetch 仍偶发失败 → 切 `actions/checkout@v4 microsoft/vcpkg @ <pinned-sha>` + bootstrap
+  - 风险：低（当前方案已部署，纯监控题）
+
 ### CI / 工作流（§3 决定不换工具，但优化项保留）
 
 - [ ] **CI 切 vcpkg `x-gha` binary cache**（替代 actions/cache）
