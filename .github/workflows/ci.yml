@@ -44,6 +44,36 @@ jobs:
       VCPKG_MAX_CONCURRENCY: 2
 
     steps:
+      # ----------------------------------------------------------------------
+      # Free disk space on Linux runner.
+      #
+      # GitHub-hosted Linux runners come with ~14 GB free on /, but Qt6 +
+      # OCCT debug build via vcpkg consumes 20+ GB across:
+      #   - /usr/local/share/vcpkg/buildtrees/qtbase  (~10 GB Qt6 alone)
+      #   - /usr/local/share/vcpkg/installed/         (libs + headers)
+      #   - $VCPKG_DEFAULT_BINARY_CACHE               (compressed archives)
+      # The libQt6Widgets.a archive step had been failing with
+      #     /usr/bin/ar: lib/libQt6Widgets.a: No space left on device
+      # because runners' default free space is exhausted. This action frees
+      # ~25-30 GB by removing preinstalled .NET / Android / Haskell / etc.
+      # we don't use. Saves ~30 min of debugging when the next big port lands.
+      # ----------------------------------------------------------------------
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false        # keep cached gcc / cmake / etc.
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false    # skip; flaky and we don't need to nuke apt cache
+          docker-images: true
+          swap-storage: false      # keep swap; helps mitigate OOM during link
+
+      - name: Show disk space (Linux)
+        if: runner.os == 'Linux'
+        run: df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
 
