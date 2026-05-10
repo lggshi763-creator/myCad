@@ -73,13 +73,16 @@ jobs:
           echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
 
       # ----------------------------------------------------------------------
-      # Sync runner's preinstalled vcpkg with upstream so the baseline commit
-      # in vcpkg.json is reachable. Without this, vcpkg fails configure with:
-      #   "while checking out baseline from commit '<sha>',
-      #    failed to `git show` versions/baseline.json"
-      # because GitHub-hosted runners' vcpkg image lags upstream master.
-      # `--unshallow` is needed if the runner's clone is shallow; the
-      # `2>/dev/null || true` keeps the step silent if it's already full.
+      # Sync runner's preinstalled vcpkg to upstream master HEAD so that:
+      #   1. baseline commit referenced by vcpkg.json is in history (fetch)
+      #   2. local HEAD has all versions/o-/<port>.json entries needed
+      #      (reset --hard).
+      #
+      # Without (2), vcpkg fails to look up port revisions like
+      #     "opencascade@7.9.3#1"
+      # because runner's vcpkg image HEAD predates that port revision —
+      # baseline.json mentions it but versions/o-/opencascade.json at the
+      # old HEAD doesn't.
       # ----------------------------------------------------------------------
       - name: Sync vcpkg to upstream master (Unix)
         if: runner.os != 'Windows'
@@ -87,6 +90,7 @@ jobs:
         run: |
           cd "$VCPKG_ROOT"
           sudo git fetch --unshallow 2>/dev/null || sudo git fetch origin
+          sudo git reset --hard origin/master
           git log -1 --format='%H %s'
 
       - name: Sync vcpkg to upstream master (Windows)
@@ -97,6 +101,7 @@ jobs:
           # Windows runner has rw on C:\vcpkg, no sudo needed.
           git fetch --unshallow 2>$null
           if ($LASTEXITCODE -ne 0) { git fetch origin }
+          git reset --hard origin/master
           git log -1 --format='%H %s'
 
       - name: Create vcpkg binary cache directory
