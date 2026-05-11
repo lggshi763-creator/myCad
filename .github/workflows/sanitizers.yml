@@ -29,7 +29,10 @@ jobs:
   sanitize:
     name: Linux GCC + ${{ matrix.sanitizer }}
     runs-on: ubuntu-22.04
-    timeout-minutes: 150
+    # Sanitizer builds use isolated binary cache (different ABI hash from
+    # plain CI), so cold build is required on first run — even slower than
+    # plain CI because ASan/UBSan instrumentation adds 20-40% compile time.
+    timeout-minutes: 270
 
     strategy:
       fail-fast: false

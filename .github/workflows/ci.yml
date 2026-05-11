@@ -15,7 +15,11 @@ jobs:
   build:
     name: ${{ matrix.os }} / ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    # First cold build needs ~2-3h on Windows (OCCT + Qt6, each port built
+    # for both Debug and Release variants). Subsequent runs hit
+    # actions/cache and complete in minutes. 240 = 4h leaves headroom for
+    # the cold build; bump only if first-run still times out.
+    timeout-minutes: 240
 
     strategy:
       fail-fast: false
