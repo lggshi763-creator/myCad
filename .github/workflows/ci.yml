@@ -39,12 +39,14 @@ jobs:
             triplet: x64-osx
 
     env:
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
-      # Linux GitHub runners have 4 cores but only 7 GB RAM. qtbase's
-      # link step (libQt6Widgets / libQt6Network) can spike to 4-5 GB
-      # per linker. With 4-way parallelism, peak memory > 16 GB → OOM.
-      # Capping concurrency to 2 keeps peak under 10 GB. Slower (~+15
-      # min on first qtbase build) but reliable.
+      # vcpkg's native GHA cache provider: every port's binary archive is
+      # uploaded to GitHub Actions cache the moment it finishes building
+      # (not at job-end like actions/cache). This means even if a job
+      # times out mid-way, already-built ports survive — next run picks
+      # up where this one died.
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      # Linux GitHub runners: 4 cores, 7 GB RAM. qtbase link can spike
+      # to 4-5 GB per linker; cap concurrency to avoid OOM.
       VCPKG_MAX_CONCURRENCY: 2
 
     steps:
@@ -82,6 +84,19 @@ jobs:
         uses: actions/checkout@v4
 
       # ----------------------------------------------------------------------
+      # Expose ACTIONS_CACHE_URL + ACTIONS_RUNTIME_TOKEN so vcpkg's x-gha
+      # binary cache provider can authenticate to the GHA cache backend.
+      # (These are normally set on action steps only; vcpkg runs inside our
+      # shell steps so it needs them exported.)
+      # ----------------------------------------------------------------------
+      - name: Export GHA cache env for vcpkg x-gha
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      # ----------------------------------------------------------------------
       # Map build_type → preset suffix (Debug→debug, RelWithDebInfo→release)
       # ----------------------------------------------------------------------
       - name: Resolve preset name
@@ -113,49 +128,46 @@ jobs:
           echo "$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_PATH"
 
       # ----------------------------------------------------------------------
-      # Sync runner's preinstalled vcpkg to upstream master HEAD so that:
-      #   1. baseline commit referenced by vcpkg.json is in history (fetch)
-      #   2. local HEAD has all versions/o-/<port>.json entries needed
-      #      (reset --hard).
-      #
-      # Without (2), vcpkg fails to look up port revisions like
-      #     "opencascade@7.9.3#1"
-      # because runner's vcpkg image HEAD predates that port revision —
-      # baseline.json mentions it but versions/o-/opencascade.json at the
-      # old HEAD doesn't.
+      # Pin runner's preinstalled vcpkg to EXACTLY the commit specified by
+      # vcpkg.json's builtin-baseline. This keeps vcpkg's ABI hashes (used
+      # as binary cache keys) stable across CI runs. If we `git reset --hard
+      # origin/master` instead, upstream master moves daily and every CI
+      # run sees a different vcpkg state → different ABI hashes → binary
+      # cache never hits → 2-3h cold build every push.
       # ----------------------------------------------------------------------
-      - name: Sync vcpkg to upstream master (Unix)
+      - name: Read baseline from vcpkg.json
+        id: vcpkg_baseline
+        shell: bash
+        run: |
+          BASELINE=$(jq -r '.["builtin-baseline"]' vcpkg.json)
+          if [ -z "$BASELINE" ] || [ "$BASELINE" = "null" ]; then
+              echo "::error::vcpkg.json missing builtin-baseline"
+              exit 1
+          fi
+          echo "sha=$BASELINE" >> "$GITHUB_OUTPUT"
+          echo "Pinning runner vcpkg to baseline: $BASELINE"
+
+      - name: Pin vcpkg to baseline (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
           cd "$VCPKG_ROOT"
           sudo git fetch --unshallow 2>/dev/null || sudo git fetch origin
-          sudo git reset --hard origin/master
+          sudo git reset --hard "${{ steps.vcpkg_baseline.outputs.sha }}"
           git log -1 --format='%H %s'
 
-      - name: Sync vcpkg to upstream master (Windows)
+      - name: Pin vcpkg to baseline (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           cd $env:VCPKG_ROOT
-          # Windows runner has rw on C:\vcpkg, no sudo needed.
           git fetch --unshallow 2>$null
           if ($LASTEXITCODE -ne 0) { git fetch origin }
-          git reset --hard origin/master
+          git reset --hard "${{ steps.vcpkg_baseline.outputs.sha }}"
           git log -1 --format='%H %s'
 
-      - name: Create vcpkg binary cache directory
-        shell: bash
-        run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
-
-      - name: Cache vcpkg binary archives
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
-          restore-keys: |
-            vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-
-            vcpkg-${{ matrix.triplet }}-
+      # (No actions/cache step here — x-gha replaces it; vcpkg uploads each
+      #  port archive to GHA cache as soon as it's built.)
 
       # ----------------------------------------------------------------------
       # System deps (Qt / OCCT need lots of dev libs on Linux + macOS).
