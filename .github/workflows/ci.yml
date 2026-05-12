@@ -39,12 +39,13 @@ jobs:
             triplet: x64-osx
 
     env:
-      # vcpkg's native GHA cache provider: every port's binary archive is
-      # uploaded to GitHub Actions cache the moment it finishes building
-      # (not at job-end like actions/cache). This means even if a job
-      # times out mid-way, already-built ports survive — next run picks
-      # up where this one died.
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      # vcpkg writes binary archives here; actions/cache wraps this dir.
+      # Note: vcpkg's x-gha provider was REMOVED upstream (2024+) — we use
+      # actions/cache + baseline pin instead. The "cache never matches"
+      # problem before was caused by ABI hash drift (runner vcpkg HEAD
+      # following origin/master), now fixed by pinning runner vcpkg to
+      # vcpkg.json's builtin-baseline.
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg
       # Linux GitHub runners: 4 cores, 7 GB RAM. qtbase link can spike
       # to 4-5 GB per linker; cap concurrency to avoid OOM.
       VCPKG_MAX_CONCURRENCY: 2
@@ -82,19 +83,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-
-      # ----------------------------------------------------------------------
-      # Expose ACTIONS_CACHE_URL + ACTIONS_RUNTIME_TOKEN so vcpkg's x-gha
-      # binary cache provider can authenticate to the GHA cache backend.
-      # (These are normally set on action steps only; vcpkg runs inside our
-      # shell steps so it needs them exported.)
-      # ----------------------------------------------------------------------
-      - name: Export GHA cache env for vcpkg x-gha
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       # ----------------------------------------------------------------------
       # Map build_type → preset suffix (Debug→debug, RelWithDebInfo→release)
@@ -166,8 +154,21 @@ jobs:
           git reset --hard "${{ steps.vcpkg_baseline.outputs.sha }}"
           git log -1 --format='%H %s'
 
-      # (No actions/cache step here — x-gha replaces it; vcpkg uploads each
-      #  port archive to GHA cache as soon as it's built.)
+      - name: Create vcpkg binary cache directory
+        shell: bash
+        run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
+
+      # Restore + save vcpkg binary archives across runs.
+      # Key includes vcpkg.json hash so manifest changes invalidate cache.
+      # Restore-keys provide partial-match fallback if exact key missing.
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ matrix.triplet }}-${{ matrix.build_type }}-
+            vcpkg-${{ matrix.triplet }}-
 
       # ----------------------------------------------------------------------
       # System deps (Qt / OCCT need lots of dev libs on Linux + macOS).
