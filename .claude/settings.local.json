@@ -33,7 +33,10 @@
       "Bash(git config *)",
       "Bash(time git *)",
       "Bash(xargs ls *)",
-      "Read(//c/Users/XShi/.claude/**)"
+      "Read(//c/Users/XShi/.claude/**)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "Bash(gh auth *)",
+      "Bash(gh run *)"
     ]
   },
   "hooks": {

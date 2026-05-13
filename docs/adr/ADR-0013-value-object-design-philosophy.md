@@ -1,9 +1,9 @@
 # ADR-0013: 值对象设计哲学
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-05-06
 - **Decider**: 项目维护者
-- **Author**: Claude Code (drafted) / <人工逐条 review>
+- **Author**: Claude Code (drafted) / 项目维护者 (accepted as-is, 9/9 决策)
 
 ## Context（背景）
 
@@ -390,18 +390,7 @@ std::string to_string(Point3D p) {
 
 ---
 
-## 你的逐条 review 表（请在每条选 ✅ / ✏️ / ❌）
+## Acceptance Log（接受记录）
 
-| # | 决策 | ✅ 同意 | ✏️ 需改 | ❌ 否决 | 备注 |
-|---|---|---|---|---|---|
-| 1 | < 32 B 传值，≥ 32 B const ref | | | | |
-| 2 | 构造后只读，无 setter | | | | |
-| 3 | ID 类 `<=>`、浮点类显式 `==` + epsilon | | | | |
-| 4 | 全局 `kDefaultEpsilon=1e-9` + `nearEqual()` 双重载 | | | | |
-| 5 | `double` 固定，不模板化 | | | | |
-| 6 | **隐式 mm 全域**，强类型单位推迟 Phase 2 评估 | | | | |
-| 7 | `std::hash` 仅 ID 类提供，几何值不提供 | | | | |
-| 8 | 全 noexcept（除 to_string） | | | | |
-| 9 | 自由函数 `to_string`，纯 std::string 拼接 | | | | |
-
-**逐条确认后**：把 Status 从 `Proposed` 改成 `Accepted`，归档进 `docs/adr/` 索引，下个会话开 Sprint 0.2 时直接引用本 ADR。
+- **2026-05-06**：项目维护者逐条审阅，**9 项全部按起草版本接受**，无修订。Status 从 `Proposed` → `Accepted`。
+- 评估时机：决策 #5（`double` 固定）和 #6（隐式 mm）是难以反转的；约定在 **Phase 2 装配体 / 互操作 sprint 启动前**重新评估一次，确认 myCad 目标用户画像（工业机械 / 军工 / 央企研发）仍以 mm-scale 为主。如需切换，再写 ADR-0014/15 supersede 对应小节。

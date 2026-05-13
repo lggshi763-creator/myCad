@@ -59,19 +59,51 @@
   - 候选解：随每个值对象 PR 同步取消注释 + 调整字段名（MSVC STL 内部字段命名可能和样板有出入）
   - 风险：低（natvis 不影响构建，只是调试体验）
 
+### CI / Linux 资源约束
+
+- [ ] **Linux runner 磁盘占用监控**：当前用 `jlumbroso/free-disk-space@main` 释放 ~28GB，给 Qt+OCCT 留余量。**未来如果引入更多大依赖**（boost / VTK / OpenCascade-Data 之类），可能再次撞 disk full
+  - 上下文：W19 撞 `/usr/bin/ar: No space left on device` 在 libQt6Widgets.a 这步
+  - 已上方案：workflow 开头清 .NET / Android SDK / Haskell / Docker
+  - 候选升级：
+    1. 加 `large-packages: true` 进一步清 apt cache（多腾 ~5GB，但 flaky）
+    2. self-hosted runner 上有 100+ GB 可用
+    3. `actions/runner@latest` 出过 large 版本（未稳定）
+  - 风险：低（监控题）
+
+- [ ] **VCPKG_MAX_CONCURRENCY=2 是不是仍必要**：一开始猜 OOM 加的，后来发现是 disk 问题。`MAX_CONCURRENCY=2` 让构建慢 ~+15 min。等磁盘问题确认解决后，可恢复默认（4）测一下，若不再 OOM 就保持默认
+  - 风险：低（恢复后 monitor 1-2 个 sprint）
+
+- [ ] **首次 cold build 太慢的备选**：如果 240/270 min timeout 仍不够（vcpkg 上游升级让 OCCT/Qt 编更久 / 加更多 port 后），考虑：
+  1. **拆 workflow**：把 vcpkg install 拆成独立 job"warm cache"，后续 build/test job 依赖它（cache 命中后短）
+  2. **vcpkg only-release**：自定义 triplet 设 `VCPKG_BUILD_TYPE=release`，让 vcpkg 只编 Release 而不编 Debug，省一半时间。代价：Debug 项目链接 Release vcpkg deps（C++ 多数情况下 OK）
+  3. **跳过 OCCT 在 CI**：只在本地编 OCCT；CI 用 mock IGeometryPort。Phase 0 末再启用 OCCT CI。激进，但保 CI 在 30 min 内
+  - 触发时机：当本周 push 之后 cold build 还是 timeout，再处理
+
 ### CI / vcpkg baseline 维护
 
-- [ ] **Baseline 维护策略**：评估"runner 自带 vcpkg + git fetch"够不够稳定，还是需要切到"CI 自己 checkout vcpkg 到固定 commit"
-  - 上下文：W19 ci.yml 撞 baseline `cf9b6f1a...` 在 runner vcpkg 镜像里找不到的错误
-  - 已上方案：在 ci.yml + sanitizers.yml 加 `git fetch --unshallow` 兜底（W19 末尾 push）
-  - 候选解：如果 fetch 仍偶发失败 → 切 `actions/checkout@v4 microsoft/vcpkg @ <pinned-sha>` + bootstrap
-  - 风险：低（当前方案已部署，纯监控题）
+- [ ] **Baseline 维护策略**：评估"runner 自带 vcpkg + git fetch + reset --hard"够不够稳定，还是需要切到"CI 自己 checkout vcpkg 到固定 commit"
+  - 上下文：W19 ci.yml 撞两次 vcpkg baseline 错——第一次"baseline commit 不在 history"（光 fetch 解决），第二次"port version `7.9.3#1` 不在 versions DB"（fetch + `reset --hard origin/master` 解决）
+  - 已上方案：ci.yml + sanitizers.yml 都加了 `sudo git fetch && sudo git reset --hard origin/master`（W19 末 push）
+  - 风险：中。**`reset --hard` 把 runner vcpkg HEAD 推到 upstream/master 最新**——意味着 baseline 必须是 master 的 ancestor。如果 user 本地 vcpkg 切了 fork / 自定义分支，`vcpkg.json` 的 baseline 会与 CI 不匹配
+  - 候选升级方案：当 push 到 GitHub 后第 1-2 个 sprint 仍偶发失败 → 切 self-checkout：
+    ```yaml
+    - uses: actions/checkout@v4
+      with:
+        repository: microsoft/vcpkg
+        ref: <vcpkg.json's builtin-baseline>
+        path: vcpkg
+    - run: ./vcpkg/bootstrap-vcpkg.sh
+    ```
+    这样 CI 完全不依赖 runner image 的 vcpkg 状态。代价 +30s 每个 job + ~100MB 网络
 
 ### CI / 工作流（§3 决定不换工具，但优化项保留）
 
-- [ ] **CI 切 vcpkg `x-gha` binary cache**（替代 actions/cache）
-  - 提案 §3.5 第 5 项；解压速度 2-3x
-  - 候选解：[3.A] 提示词
+- [x] ~~**CI 切 vcpkg `x-gha` binary cache**（替代 actions/cache）~~  ← W19 走了一遍发现 x-gha 已被 vcpkg upstream 移除（2024+），**改用 actions/cache + baseline pin**（即 runner vcpkg 钉死到 vcpkg.json baseline）。真正修了"cache 永不命中"的根因（ABI 漂移），不是 cache 机制问题
+
+- [ ] **未来切 NuGet to GitHub Packages 作为更可靠的 cache 后端**：actions/cache 有个已知问题——job timeout 时 post-step 不一定运行 → cache 可能没保存。NuGet 是 per-port 上传，每个 port 编完立即 push 到 GH Packages registry，不依赖 job 完成
+  - 触发时机：cold build timeout 反复发生（应当不会，因为 baseline pin 后第二次开始就是 warm cache）
+  - 复杂度：高（需 nuget.exe + mono on Linux + GITHUB_TOKEN 认证 + packages: write 权限）
+  - 参考：[vcpkg + GH Packages 官方文档](https://learn.microsoft.com/vcpkg/consume/binary-caching-github-packages)
 
 - [ ] **CI 加 paths-filter 跳 docs-only 改动的构建矩阵**
   - 提案 §3.5 第 6 项；省 6 个 runner × N min
