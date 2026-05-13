@@ -39,7 +39,8 @@
       "inherits": "vs2022-x64-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "MYCAD_ENABLE_BENCHMARKS": "ON"
+        "MYCAD_ENABLE_BENCHMARKS": "ON",
+        "VCPKG_MANIFEST_FEATURES": "tests;benchmarks"
       }
     },
     {
@@ -81,7 +82,8 @@
       "inherits": "linux-gcc-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "MYCAD_ENABLE_BENCHMARKS": "ON"
+        "MYCAD_ENABLE_BENCHMARKS": "ON",
+        "VCPKG_MANIFEST_FEATURES": "tests;benchmarks"
       }
     },
     {
@@ -107,7 +109,8 @@
       "inherits": "macos-clang-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "MYCAD_ENABLE_BENCHMARKS": "ON"
+        "MYCAD_ENABLE_BENCHMARKS": "ON",
+        "VCPKG_MANIFEST_FEATURES": "tests;benchmarks"
       }
     }
   ],
