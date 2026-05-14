@@ -95,7 +95,8 @@ std::string greet(std::string_view name);
 | 注释符 | `///`（三斜杠）。**禁用** `/** ... */` |
 | 标签风格 | `@brief` / `@param` / `@return` / `@throws` / `@see`。**不**用反斜杠形式 `\param` |
 | brief | 一行英文，祈使句开头（Builds / Computes / Returns / Validates …） |
-| 详情 | 中文为主，可混 markdown 代码块 |
+| 详情 | 仅在逻辑**非显而易见**时补充；绝不写与函数名 / 参数名重复的废话 |
+| @param / @return | 参数或返回值自明时**省略**；只在有歧义、副作用或约束时写 |
 | 自定义别名 | `@thread-safe` / `@noexcept-ok` / `@complexity{O(N)}` / `@si-units{millimeter}`（在 [Doxyfile](Doxyfile) 定义） |
 
 样板文件（直接抄结构）：[src/domain/shared/include/mycad/domain/Hello.hpp](src/domain/shared/include/mycad/domain/Hello.hpp)。

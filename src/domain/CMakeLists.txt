@@ -1,5 +1,7 @@
 add_library(mycad_domain STATIC
     shared/Hello.cpp
+    shared/Point2D.cpp
+    shared/Point3D.cpp
 )
 add_library(mycad::domain ALIAS mycad_domain)
 

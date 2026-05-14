@@ -19,5 +19,3 @@ std::string greet(std::string_view name) {
 }
 
 }  // namespace mycad::domain
-
-int bad_format(){return 0;}

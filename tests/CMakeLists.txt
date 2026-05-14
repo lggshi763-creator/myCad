@@ -3,6 +3,7 @@
 
 add_executable(mycad_unit_tests
     domain/shared/hello_test.cpp
+    domain/shared/value_objects_test.cpp
 )
 
 target_link_libraries(mycad_unit_tests
