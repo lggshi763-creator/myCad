@@ -6,6 +6,10 @@ add_library(mycad_domain STATIC
     shared/Axis3D.cpp
     shared/BoundingBox.cpp
     shared/Transform3D.cpp
+    shared/EventId.cpp
+    shared/AggregateId.cpp
+    shared/SketchId.cpp
+    shared/Version.cpp
 )
 add_library(mycad::domain ALIAS mycad_domain)
 
