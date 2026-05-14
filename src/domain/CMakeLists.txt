@@ -2,6 +2,10 @@ add_library(mycad_domain STATIC
     shared/Hello.cpp
     shared/Point2D.cpp
     shared/Point3D.cpp
+    shared/Vector3D.cpp
+    shared/Axis3D.cpp
+    shared/BoundingBox.cpp
+    shared/Transform3D.cpp
 )
 add_library(mycad::domain ALIAS mycad_domain)
 

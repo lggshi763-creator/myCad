@@ -101,7 +101,14 @@ std::string greet(std::string_view name);
 
 样板文件（直接抄结构）：[src/domain/shared/include/mycad/domain/Hello.hpp](src/domain/shared/include/mycad/domain/Hello.hpp)。
 
-### 2.4 CMake preset 红线
+### 2.4 测试代码红线
+
+| 禁止 | 原因 |
+|---|---|
+| `CHECK_THAT(T{a, b, c}.method(), ...)` 在同一行 | MSVC 预处理器把花括号内的逗号当宏参数分隔符，编译报"参数过多"；把表达式提取为局部变量再传入 |
+| 测试名称含非 ASCII 字符（如 em dash `—`） | `catch_discover_tests` 在 Windows 上 UTF-8 编码串位，ctest 找不到测试名导致全部报 Failed |
+
+### 2.5 CMake preset 红线
 
 | 禁止 | 原因 |
 |---|---|
