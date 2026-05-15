@@ -14,7 +14,7 @@ add_library(mycad_domain STATIC
 )
 add_library(mycad::domain ALIAS mycad_domain)
 
-target_compile_features(mycad_domain PUBLIC cxx_std_20)
+target_compile_features(mycad_domain PUBLIC cxx_std_23)
 
 # Public headers live under shared/include/mycad/domain/ so consumers
 # always include with the project namespace prefix:
