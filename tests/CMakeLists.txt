@@ -8,6 +8,7 @@ add_executable(mycad_unit_tests
     domain/shared/domain_event_test.cpp
     domain/shared/geometry_port_test.cpp
     domain/shared/ports_test.cpp
+    domain/shared/geometry_construction_port_test.cpp
 )
 
 target_link_libraries(mycad_unit_tests
