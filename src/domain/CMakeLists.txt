@@ -10,6 +10,7 @@ add_library(mycad_domain STATIC
     shared/AggregateId.cpp
     shared/SketchId.cpp
     shared/Version.cpp
+    shared/EventTypeRegistry.cpp
 )
 add_library(mycad::domain ALIAS mycad_domain)
 

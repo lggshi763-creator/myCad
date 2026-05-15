@@ -16,103 +16,136 @@
   How to add a new entry:
     1. Define the type in src/.
     2. In a debug session, expand a variable of that type in the Watch / Locals
-       window — note the field names VS shows (e.g., "_Mypair._Myval2._Mylast"
-       for std::vector<T> internals — those are MSVC STL-specific).
+       window — note the field names VS shows.
     3. Add a <Type Name="..."> below following the pattern.
     4. Save and continue debugging — VS reloads natvis on the fly without
        restarting the session (Tools -> Options -> Debugging -> 'Enable Edit
        and Continue' must be on, but is by default).
 
   Notes:
-    - Most types referenced below DO NOT EXIST YET. They land in Sprint 0.2+.
-      The entries are commented out (`<!- - ... - ->`) until then. Uncomment
-      individual entries as the corresponding type ships.
-    - When MSVC STL internals change between toolset versions, the
-      `entities_._Mypair._Myval2.…` style accessors can break. If a visualizer
-      stops working after a VS update, fall back to `<Expand HideRawView="true">`
-      with simpler `<Item>` elements instead of computing sizes by hand.
+    - Entries below correspond to types that shipped in Sprint 0.2.
+    - When MSVC STL internals change between toolset versions, array/vector
+      accessors can break. Verify after every VS update.
 -->
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
   <!-- ====================================================================
-       Domain layer (Sprint 0.2)
+       Identity types (Sprint 0.2)
        ==================================================================== -->
 
   <!--
-    BRepHandle — opaque handle into the OCCT topology cache.
-    Activate when src/domain/shared/include/mycad/domain/BRepHandle.hpp lands.
+    EventId — 128-bit event identity stored as std::array<uint8_t, 16>.
+    The ,x format renders each byte as two hex digits (lowercase).
   -->
-  <!--
-  <Type Name="mycad::domain::BRepHandle">
-    <DisplayString Condition="id == 0">BRepHandle{{ invalid }}</DisplayString>
-    <DisplayString>BRepHandle{{ id={id} }}</DisplayString>
-    <Expand>
-      <Item Name="id">id</Item>
-      <Item Name="generation">generation</Item>
-    </Expand>
-  </Type>
-  -->
-
-  <!--
-    EventId — ULID-encoded immutable event identity (Sprint 0.2 / 0.3).
-    `value` is expected to be a std::array<unsigned char,16> or similar 128-bit
-    ULID. The `,sb` format specifier renders bytes as hex pairs.
-  -->
-  <!--
   <Type Name="mycad::domain::EventId">
-    <DisplayString>EventId{{ {value,sb} }}</DisplayString>
+    <DisplayString>{bytes[0],x}{bytes[1],x}{bytes[2],x}{bytes[3],x}-{bytes[4],x}{bytes[5],x}-{bytes[6],x}{bytes[7],x}-{bytes[8],x}{bytes[9],x}-{bytes[10],x}{bytes[11],x}{bytes[12],x}{bytes[13],x}{bytes[14],x}{bytes[15],x}</DisplayString>
     <Expand>
-      <Item Name="raw bytes">value</Item>
+      <Item Name="bytes">bytes</Item>
     </Expand>
   </Type>
-  -->
 
-  <!--
-    AggregateId / SketchId / FeatureId — strong-typed wrappers around UUID.
-    All follow the same shape: a single `value` (std::array<uint8_t,16>) plus
-    a phantom tag type for compile-time disambiguation.
-  -->
-  <!--
   <Type Name="mycad::domain::AggregateId">
-    <DisplayString>AggregateId{{ {value,sb} }}</DisplayString>
+    <DisplayString>{bytes[0],x}{bytes[1],x}{bytes[2],x}{bytes[3],x}-{bytes[4],x}{bytes[5],x}-{bytes[6],x}{bytes[7],x}-{bytes[8],x}{bytes[9],x}-{bytes[10],x}{bytes[11],x}{bytes[12],x}{bytes[13],x}{bytes[14],x}{bytes[15],x}</DisplayString>
+    <Expand>
+      <Item Name="bytes">bytes</Item>
+    </Expand>
   </Type>
-  <Type Name="mycad::domain::SketchId">
-    <DisplayString>SketchId{{ {value,sb} }}</DisplayString>
-  </Type>
-  -->
 
-  <!--
-    Version — monotonically increasing aggregate revision counter.
-  -->
-  <!--
-  <Type Name="mycad::domain::Version">
-    <DisplayString Condition="value == 0">Version{{ initial }}</DisplayString>
-    <DisplayString>v{value}</DisplayString>
+  <Type Name="mycad::domain::SketchId">
+    <DisplayString>{bytes[0],x}{bytes[1],x}{bytes[2],x}{bytes[3],x}-{bytes[4],x}{bytes[5],x}-{bytes[6],x}{bytes[7],x}-{bytes[8],x}{bytes[9],x}-{bytes[10],x}{bytes[11],x}{bytes[12],x}{bytes[13],x}{bytes[14],x}{bytes[15],x}</DisplayString>
+    <Expand>
+      <Item Name="bytes">bytes</Item>
+    </Expand>
   </Type>
-  -->
+
+  <Type Name="mycad::domain::Version">
+    <DisplayString Condition="value == 0">v0 (initial)</DisplayString>
+    <DisplayString>v{value}</DisplayString>
+    <Expand>
+      <Item Name="value">value</Item>
+    </Expand>
+  </Type>
 
   <!-- ====================================================================
        Geometry value objects (Sprint 0.2)
        ==================================================================== -->
 
-  <!--
   <Type Name="mycad::domain::Point2D">
     <DisplayString>({x,g}, {y,g})</DisplayString>
+    <Expand>
+      <Item Name="x">x</Item>
+      <Item Name="y">y</Item>
+    </Expand>
   </Type>
+
   <Type Name="mycad::domain::Point3D">
     <DisplayString>({x,g}, {y,g}, {z,g})</DisplayString>
+    <Expand>
+      <Item Name="x">x</Item>
+      <Item Name="y">y</Item>
+      <Item Name="z">z</Item>
+    </Expand>
   </Type>
+
   <Type Name="mycad::domain::Vector3D">
     <DisplayString>&lt;{x,g}, {y,g}, {z,g}&gt;</DisplayString>
+    <Expand>
+      <Item Name="x">x</Item>
+      <Item Name="y">y</Item>
+      <Item Name="z">z</Item>
+    </Expand>
   </Type>
+
   <Type Name="mycad::domain::Axis3D">
-    <DisplayString>Axis{{ origin=({origin.x,g},{origin.y,g},{origin.z,g}), dir=&lt;{direction.x,g},{direction.y,g},{direction.z,g}&gt; }}</DisplayString>
+    <DisplayString>Axis{{ origin=({origin.x,g}, {origin.y,g}, {origin.z,g}), dir=&lt;{direction.x,g}, {direction.y,g}, {direction.z,g}&gt; }}</DisplayString>
+    <Expand>
+      <Item Name="origin">origin</Item>
+      <Item Name="direction">direction</Item>
+    </Expand>
   </Type>
+
   <Type Name="mycad::domain::BoundingBox">
-    <DisplayString Condition="empty">BoundingBox{{ empty }}</DisplayString>
-    <DisplayString>BoundingBox{{ min=({min.x,g},{min.y,g},{min.z,g}), max=({max.x,g},{max.y,g},{max.z,g}) }}</DisplayString>
+    <DisplayString>BB{{ min=({min.x,g},{min.y,g},{min.z,g}), max=({max.x,g},{max.y,g},{max.z,g}) }}</DisplayString>
+    <Expand>
+      <Item Name="min">min</Item>
+      <Item Name="max">max</Item>
+    </Expand>
   </Type>
+
+  <!--
+    Transform3D — row-major 4x4 affine matrix (field: m[16]).
+    DisplayString shows translation (column 3: m[3], m[7], m[11]) for quick
+    orientation; Expand shows the full matrix row-by-row.
   -->
+  <Type Name="mycad::domain::Transform3D">
+    <DisplayString>Transform3D{{ t=({m[3],g}, {m[7],g}, {m[11],g}) }}</DisplayString>
+    <Expand>
+      <Item Name="row0">"[{m[0],g}  {m[1],g}  {m[2],g}  {m[3],g}]"</Item>
+      <Item Name="row1">"[{m[4],g}  {m[5],g}  {m[6],g}  {m[7],g}]"</Item>
+      <Item Name="row2">"[{m[8],g}  {m[9],g}  {m[10],g}  {m[11],g}]"</Item>
+      <Item Name="row3">"[{m[12],g}  {m[13],g}  {m[14],g}  {m[15],g}]"</Item>
+      <Item Name="raw">m</Item>
+    </Expand>
+  </Type>
+
+  <!-- ====================================================================
+       Domain events (Sprint 0.2)
+       ==================================================================== -->
+
+  <!--
+    DomainEvent base — shows aggregate version and timestamp.
+    typeName() is virtual so cannot be called directly in natvis; use
+    the Expand section to see the concrete subclass via [base class] node.
+  -->
+  <Type Name="mycad::domain::DomainEvent">
+    <DisplayString>DomainEvent{{ ver={aggregateVersion_.value}, ts={occurredAtMs_} }}</DisplayString>
+    <Expand>
+      <Item Name="eventId">eventId_</Item>
+      <Item Name="aggregateId">aggregateId_</Item>
+      <Item Name="version">aggregateVersion_</Item>
+      <Item Name="occurredAtMs">occurredAtMs_</Item>
+    </Expand>
+  </Type>
 
   <!-- ====================================================================
        Aggregates (Sprint 0.3+)
@@ -138,8 +171,8 @@
   -->
 
   <!-- ====================================================================
-       tl::expected — gives a useful summary instead of raw discriminator
-       Activate when first usage lands (likely Sprint 0.2 IGeometryPort).
+       tl::expected — gives a useful summary instead of raw discriminator.
+       Activate when first usage lands.
        ==================================================================== -->
 
   <!--
@@ -151,18 +184,6 @@
       <Item Name="error" Condition="!m_has_val">m_unexpect.m_val</Item>
     </Expand>
   </Type>
-  -->
-
-  <!-- ====================================================================
-       Active visualizers below this line — uncomment must be paired with
-       a real type definition merged to master.
-       ==================================================================== -->
-
-  <!--
-    Marker entry. Lets you confirm natvis is being loaded by setting a
-    breakpoint inside greet() and inspecting any local — VS will auto-detect
-    this file, so no special treatment is needed. Remove once the first real
-    type lands in Sprint 0.2.
   -->
 
 </AutoVisualizer>

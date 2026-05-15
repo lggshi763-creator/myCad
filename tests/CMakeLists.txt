@@ -5,6 +5,9 @@ add_executable(mycad_unit_tests
     domain/shared/hello_test.cpp
     domain/shared/value_objects_test.cpp
     domain/shared/identity_test.cpp
+    domain/shared/domain_event_test.cpp
+    domain/shared/geometry_port_test.cpp
+    domain/shared/ports_test.cpp
 )
 
 target_link_libraries(mycad_unit_tests
