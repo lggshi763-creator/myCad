@@ -31,3 +31,25 @@ catch_discover_tests(mycad_unit_tests
     # Use .xml extension on report files; matches what most CI test parsers expect.
     OUTPUT_SUFFIX .xml
 )
+
+# ---------------------------------------------------------------------------
+# Infrastructure integration tests — separate target because it links OCCT.
+# Keep apart from mycad_unit_tests so the domain-layer purity check (V4) can
+# grep mycad_unit_tests sources without finding any OCCT symbols.
+# ---------------------------------------------------------------------------
+add_executable(mycad_infra_tests
+    infrastructure/geometry/occt_adapter_test.cpp
+)
+
+target_link_libraries(mycad_infra_tests
+    PRIVATE
+        Catch2::Catch2WithMain
+        mycad::infrastructure
+        mycad::compile_options
+)
+
+catch_discover_tests(mycad_infra_tests
+    REPORTER junit
+    OUTPUT_DIR ${MYCAD_TEST_REPORTS_DIR}
+    OUTPUT_SUFFIX .xml
+)
