@@ -126,6 +126,18 @@
 
 ---
 
+## 2026-05-16（Sprint 0.4 交付后录入）
+
+### 渲染 / UI
+
+- [ ] **GL context cleanup — 关闭窗口时 OpenGL 资源析构顺序错误**
+  - 上下文：Sprint 0.4 交付后，关闭主窗口时触发异常/崩溃。`OpenGLRenderAdapter::~OpenGLRenderAdapter` 在 Qt GL context 已销毁后调用 `glDeleteVertexArrays` / `glDeleteBuffers` / `glDeleteProgram`，属于无效 GL 调用
+  - 候选解：为 `OpenGLRenderAdapter` 增加 `cleanup()` 方法；在 `ViewportWidget::initializeGL()` 中把它连接到 `QOpenGLContext::aboutToBeDestroyed` 信号，保证 GL 资源在 context 销毁前被释放；destructor 改为只 reset PIMPL
+  - 风险：低（仅影响退出时体验，不影响运行时功能；但若后续加 ASan 会报 use-after-destroy）
+  - 计划：Sprint 0.5 T6 处理
+
+---
+
 ## 模板（新加项参考此格式）
 
 ```markdown
