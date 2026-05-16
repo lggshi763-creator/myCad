@@ -19,7 +19,7 @@ jobs:
   # --------------------------------------------------------------------------
   domain-isolation:
     name: Domain layer isolation check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,13 +62,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-22.04, macos-13]
+        os: [windows-2022, ubuntu-24.04, macos-13]
         build_type: [Debug, RelWithDebInfo]
         include:
           - os: windows-2022
             preset_prefix: vs2022-x64
             triplet: x64-windows
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             preset_prefix: linux-gcc
             triplet: x64-linux
           - os: macos-13
@@ -223,7 +223,7 @@ jobs:
             ninja-build \
             autoconf-archive bison flex \
             libxi-dev libxmu-dev libxkbcommon-dev \
-            libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libegl-dev \
             libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
             libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev \
             libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev \

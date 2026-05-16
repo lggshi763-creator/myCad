@@ -18,8 +18,8 @@ struct Axis3D {
     Vector3D direction;
 
     constexpr Axis3D() noexcept = default;
-    constexpr Axis3D(Point3D origin, Vector3D direction) noexcept
-        : origin{origin}, direction{direction} {}
+    constexpr Axis3D(Point3D origin_, Vector3D direction_) noexcept
+        : origin{origin_}, direction{direction_} {}
 
     /// @brief Compares origin and direction within kDefaultEpsilon.
     /// @noexcept-ok

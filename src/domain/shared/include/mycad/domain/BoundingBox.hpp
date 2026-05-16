@@ -15,7 +15,7 @@ struct BoundingBox {
     Point3D max;
 
     constexpr BoundingBox() noexcept = default;
-    constexpr BoundingBox(Point3D min, Point3D max) noexcept : min{min}, max{max} {}
+    constexpr BoundingBox(Point3D min_, Point3D max_) noexcept : min{min_}, max{max_} {}
 
     /// @brief Returns true if p lies inside or on the boundary.
     /// @noexcept-ok
