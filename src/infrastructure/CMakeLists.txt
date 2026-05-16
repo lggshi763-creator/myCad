@@ -12,9 +12,8 @@ add_library(mycad_infrastructure STATIC
     eventsourcing/InMemoryEventStore.cpp
     ecs/EnttRegistry.cpp
     rendering/OpenGLRenderAdapter.cpp
-    # Sprint 0.5 — added when source files are created:
-    # eventsourcing/SqliteEventStore.cpp
-    # persistence/MycadFileStore.cpp
+    eventsourcing/SqliteEventStore.cpp
+    # persistence/MycadFileStore.cpp  ← added in T3
 )
 add_library(mycad::infrastructure ALIAS mycad_infrastructure)
 
