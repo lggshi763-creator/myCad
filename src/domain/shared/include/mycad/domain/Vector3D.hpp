@@ -16,7 +16,7 @@ struct Vector3D {
     double z{0.0};
 
     constexpr Vector3D() noexcept = default;
-    constexpr Vector3D(double x, double y, double z) noexcept : x{x}, y{y}, z{z} {}
+    constexpr Vector3D(double x_, double y_, double z_) noexcept : x{x_}, y{y_}, z{z_} {}
 
     /// @brief Returns the dot product with v.
     /// @noexcept-ok

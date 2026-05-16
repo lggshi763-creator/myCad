@@ -15,7 +15,7 @@ struct Point2D {
     double y{0.0};
 
     constexpr Point2D() noexcept = default;
-    constexpr Point2D(double x, double y) noexcept : x{x}, y{y} {}
+    constexpr Point2D(double x_, double y_) noexcept : x{x_}, y{y_} {}
 
     /// @brief Returns a new point offset by delta.
     /// @noexcept-ok

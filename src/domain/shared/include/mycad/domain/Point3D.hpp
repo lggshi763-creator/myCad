@@ -17,7 +17,7 @@ struct Point3D {
     double z{0.0};
 
     constexpr Point3D() noexcept = default;
-    constexpr Point3D(double x, double y, double z) noexcept : x{x}, y{y}, z{z} {}
+    constexpr Point3D(double x_, double y_, double z_) noexcept : x{x_}, y{y_}, z{z_} {}
 
     /// @brief Returns a new point offset by delta.
     /// @noexcept-ok
