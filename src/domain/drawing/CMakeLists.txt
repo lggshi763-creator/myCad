@@ -1,7 +1,7 @@
 add_library(mycad_drawing STATIC placeholder.cpp)
 add_library(mycad::drawing ALIAS mycad_drawing)
 
-target_compile_features(mycad_drawing PUBLIC cxx_std_20)
+# C++ standard inherited from root CMAKE_CXX_STANDARD (currently 23).
 target_include_directories(mycad_drawing PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/shared/include>
 )

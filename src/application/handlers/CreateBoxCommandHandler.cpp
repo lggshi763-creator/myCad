@@ -8,8 +8,10 @@ namespace mycad::application::handlers {
 CreateBoxCommandHandler::CreateBoxCommandHandler(
     std::shared_ptr<domain::IGeometryConstructionPort> geom,
     std::shared_ptr<domain::IEntityRegistry> ecs,
-    std::shared_ptr<domain::IEventStore> store)
-    : geom_{std::move(geom)}, ecs_{std::move(ecs)}, store_{std::move(store)} {}
+    std::shared_ptr<domain::IEventStore> store,
+    std::shared_ptr<domain::IRenderPort> renderer)
+    : geom_{std::move(geom)}, ecs_{std::move(ecs)}, store_{std::move(store)},
+      renderer_{std::move(renderer)} {}
 
 CommandResult CreateBoxCommandHandler::handle(const commands::CreateBoxCommand& cmd,
                                               const CommandContext& /*ctx*/) {
@@ -51,7 +53,18 @@ CommandResult CreateBoxCommandHandler::handle(const commands::CreateBoxCommand& 
         return std::unexpected(CommandError{CommandErrorKind::ConcurrencyConflict, e.what()});
     }
 
-    return {};  // success — callers query state via store / ECS
+    // --- 6. Tessellate + upload to renderer (optional) ---
+    if (renderer_) {
+        auto meshResult = geom_->tessellate(handle, tessParams);
+        if (!meshResult) {
+            // Tessellation failure is non-fatal: event is already persisted.
+            // Log-worthy in production; for Sprint 0.4 we silently skip upload.
+            return {};
+        }
+        renderer_->uploadMesh(handle, *meshResult);
+    }
+
+    return {};  // success
 }
 
 }  // namespace mycad::application::handlers

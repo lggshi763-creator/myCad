@@ -8,16 +8,18 @@ add_library(mycad_infrastructure STATIC
     geometry/OcctGeometryAdapter.cpp
     eventsourcing/InMemoryEventStore.cpp
     ecs/EnttRegistry.cpp
+    rendering/OpenGLRenderAdapter.cpp
 )
 add_library(mycad::infrastructure ALIAS mycad_infrastructure)
 
-target_compile_features(mycad_infrastructure PUBLIC cxx_std_23)
+# C++ standard inherited from root CMAKE_CXX_STANDARD (currently 23).
 
 # Public headers: consumers use #include <mycad/infrastructure/...>
 target_include_directories(mycad_infrastructure PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/geometry/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/eventsourcing/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ecs/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/rendering/include>
 )
 
 # Private OCCT include path — not exposed to consumers.
@@ -37,4 +39,7 @@ target_link_libraries(mycad_infrastructure
             TKTopAlgo     # TopExp_Explorer
             TKPrim        # BRepPrimAPI_MakeBox
             TKMesh        # BRepMesh_IncrementalMesh
+            # Qt6 OpenGL — required by OpenGLRenderAdapter.cpp (ADR-0005):
+            Qt6::OpenGL
+            Qt6::OpenGLWidgets
 )

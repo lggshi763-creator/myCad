@@ -24,12 +24,12 @@
 
 ## Sprint 验收清单
 
-- [ ] **V1** `CommandBus::send<CreateBoxCommand>` 端到端：事件落入 InMemoryEventStore，ECS 有对应 entity
-- [ ] **V2** `mycad_app_tests` 全部 PASS（CommandBus 单元测试 + 集成测试）
-- [ ] **V3** Qt 窗口打开，渲染出立方体 wireframe 或实体（OpenGL 三角形可见）
-- [ ] **V4** 鼠标左键拖动 → 轨道旋转，滚轮 → 缩放
-- [ ] **V5** VS F5 可断点命中 `OcctGeometryAdapter::makeBox`（调试体验完整）
-- [ ] **V6** `src/domain/` 零外部依赖仍成立（CI domain-isolation job 持续绿）
+- [x] **V1** `CommandBus::send<CreateBoxCommand>` 端到端：事件落入 InMemoryEventStore，ECS 有对应 entity
+- [x] **V2** `mycad_app_tests` 全部 PASS（CommandBus 单元测试 + 集成测试）
+- [x] **V3** Qt 窗口打开，渲染出立方体 wireframe 或实体（OpenGL 三角形可见）
+- [x] **V4** 鼠标左键拖动 → 轨道旋转，滚轮 → 缩放
+- [x] **V5** VS F5 可断点命中 `OcctGeometryAdapter::makeBox`（调试体验完整）
+- [x] **V6** `src/domain/` 零外部依赖仍成立（CI domain-isolation job 持续绿）
 
 ---
 
@@ -37,14 +37,14 @@
 
 | # | 任务 | 估时 | 验收 |
 |---|---|---|---|
-| T1 | CommandBus 接口 + CommandContext + CommandError | 1d | 编译通过，零外部依赖 |
-| T2 | CommandBus 实现（type-erased dispatch）+ 单元测试 | 2d | V2 CommandBus 部分 ✓ |
-| T3 | CreateBoxCommand + CreateBoxCommandHandler + 集成测试 | 1d | V1 ✓ |
-| T4 | IRenderPort 接口 + OpenGLRenderAdapter scaffold | 1d | 编译通过 |
-| T5 | OpenGL 第一个三角形（shader + VAO/VBO + draw loop） | 2d | 屏幕上可见一个彩色三角形 |
-| T6 | 网格上传：TriangleMesh → VAO，渲染立方体 | 1d | V3 ✓ |
-| T7 | MainWindow + QOpenGLWidget + Camera（perspective + orbit） | 2d | V4 ✓ |
-| T8 | 端到端连通 + VS 调试配置 + Sprint 收尾 | 1d | V5 V6 ✓ |
+| T1 | CommandBus 接口 + CommandContext + CommandError | 1d | ✅ 编译通过，零外部依赖 |
+| T2 | CommandBus 实现（type-erased dispatch）+ 单元测试 | 2d | ✅ V2 CommandBus 部分 |
+| T3 | CreateBoxCommand + CreateBoxCommandHandler + 集成测试 | 1d | ✅ V1 |
+| T4 | IRenderPort 接口 + OpenGLRenderAdapter scaffold | 1d | ✅ 编译通过 |
+| T5 | OpenGL 第一个三角形（shader + VAO/VBO + draw loop） | 2d | ✅ DSA API + 诊断三角形 + Camera + ViewportWidget |
+| T6 | 网格上传：TriangleMesh → VAO，渲染立方体 | 1d | ✅ V3，glReady 信号触发 demo box |
+| T7 | MainWindow + QOpenGLWidget + Camera（perspective + orbit） | 2d | ✅ V4，已在 T5/T6 完成 |
+| T8 | 端到端连通 + VS 调试配置 + Sprint 收尾 | 1d | ✅ V5 V6，launch.vs.json + CI Tier-B + devlog |
 
 **估时合计**：11d × ~2.5h = **~27.5h**（含 buffer）
 
@@ -611,4 +611,4 @@ int main(int argc, char* argv[]) {
 
 ---
 
-> **最后更新**：2026-05-16（Sprint 0.4 启动，Claude Code 生成）
+> **最后更新**：2026-05-16（Sprint 0.4 完结，V1-V6 全部满足）

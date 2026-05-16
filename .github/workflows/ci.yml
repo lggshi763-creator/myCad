@@ -36,7 +36,7 @@ jobs:
           fi
           echo "OK — domain layer is clean (ADR-0002 / ADR-0004 / ADR-0007)"
 
-      - name: Tier-B isolation check (infrastructure headers must not leak OCCT)
+      - name: Tier-B isolation check (infrastructure headers must not leak OCCT or OpenGL)
         run: |
           result=$(grep -rn \
             '#include[[:space:]]*[<"]\(TopoDS\|BRep_\|BRepPrim\|BRepMesh\|Poly_\|Bnd_\|gp_\|opencascade/\)' \
@@ -48,7 +48,17 @@ jobs:
             echo "$result"
             exit 1
           fi
-          echo "OK — infrastructure public headers are OCCT-free (ADR-0004 V6)"
+          echo "OK — infrastructure/geometry+eventsourcing+ecs public headers are OCCT-free (ADR-0004 V6)"
+
+          result=$(grep -rn \
+            '#include[[:space:]]*[<"]\(GL/\|GLES\|QOpenGLFunctions\|QOpenGLContext\|QOpenGLWidget\)' \
+            src/infrastructure/rendering/include/ 2>/dev/null || true)
+          if [ -n "$result" ]; then
+            echo "VIOLATION: rendering public headers contain OpenGL/Qt-GL leakage:"
+            echo "$result"
+            exit 1
+          fi
+          echo "OK — infrastructure/rendering public headers are OpenGL-free (ADR-0005)"
 
   build:
     name: ${{ matrix.os }} / ${{ matrix.build_type }}
