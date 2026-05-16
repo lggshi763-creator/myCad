@@ -1,6 +1,7 @@
 #include <mycad/ui/ViewportWidget.hpp>
 
 #include <QMouseEvent>
+#include <QOpenGLContext>
 #include <QWheelEvent>
 
 namespace mycad::ui {
@@ -26,7 +27,25 @@ void ViewportWidget::initializeGL() {
     if (adapter_) {
         adapter_->initialize();
     }
+
+    // Wire up cleanup: when the GL context is about to die, release all GPU
+    // resources while the context is still current.  DirectConnection ensures
+    // the slot fires synchronously on the rendering thread.
+    connect(context(),
+            &QOpenGLContext::aboutToBeDestroyed,
+            this,
+            &ViewportWidget::onContextAboutToBeDestroyed,
+            Qt::DirectConnection);
+
     emit glReady();
+}
+
+void ViewportWidget::onContextAboutToBeDestroyed() {
+    makeCurrent();
+    if (adapter_) {
+        adapter_->cleanup();
+    }
+    doneCurrent();
 }
 
 void ViewportWidget::resizeGL(int w, int h) {

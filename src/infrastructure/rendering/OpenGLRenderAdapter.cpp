@@ -3,6 +3,7 @@
 // All OpenGL / Qt headers are intentionally confined to this translation unit.
 // No OpenGL type or macro must leak into the public header (ADR-0005).
 #include <array>
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -215,6 +216,64 @@ MeshEntry uploadEntry(QOpenGLFunctions_4_5_Core& gl,
     return e;
 }
 
+/// @brief Computes per-vertex normals by accumulating and normalising face normals.
+///
+/// For each triangle the unnormalised face normal (cross product of two edges)
+/// is added to each of its three vertices.  After all triangles are processed
+/// each accumulated vector is normalised to unit length.  Degenerate triangles
+/// (zero cross product) contribute nothing.
+///
+/// @param vertices  Interleaved XYZ floats (length = 3 × vertexCount).
+/// @param indices   Triangle index triples (length = 3 × triangleCount).
+/// @return          Per-vertex unit normals in the same layout as vertices.
+std::vector<float> computeNormals(const std::vector<float>& vertices,
+                                  const std::vector<uint32_t>& indices) {
+    const std::size_t vertexCount = vertices.size() / 3;
+    std::vector<float> normals(vertices.size(), 0.f);
+
+    const std::size_t triCount = indices.size() / 3;
+    for (std::size_t t = 0; t < triCount; ++t) {
+        const uint32_t i0 = indices[t * 3 + 0];
+        const uint32_t i1 = indices[t * 3 + 1];
+        const uint32_t i2 = indices[t * 3 + 2];
+
+        const float* p0 = &vertices[i0 * 3];
+        const float* p1 = &vertices[i1 * 3];
+        const float* p2 = &vertices[i2 * 3];
+
+        // Edge vectors from p0.
+        const float e1x = p1[0] - p0[0], e1y = p1[1] - p0[1], e1z = p1[2] - p0[2];
+        const float e2x = p2[0] - p0[0], e2y = p2[1] - p0[1], e2z = p2[2] - p0[2];
+
+        // Face normal = e1 × e2 (not yet normalised).
+        const float nx = e1y * e2z - e1z * e2y;
+        const float ny = e1z * e2x - e1x * e2z;
+        const float nz = e1x * e2y - e1y * e2x;
+
+        // Accumulate into all three corner vertices.
+        for (const uint32_t vi : {i0, i1, i2}) {
+            normals[vi * 3 + 0] += nx;
+            normals[vi * 3 + 1] += ny;
+            normals[vi * 3 + 2] += nz;
+        }
+    }
+
+    // Normalise each accumulated vector.
+    for (std::size_t v = 0; v < vertexCount; ++v) {
+        float& nx = normals[v * 3 + 0];
+        float& ny = normals[v * 3 + 1];
+        float& nz = normals[v * 3 + 2];
+        const float len = std::sqrt(nx * nx + ny * ny + nz * nz);
+        if (len > 1e-6f) {
+            nx /= len;
+            ny /= len;
+            nz /= len;
+        }
+    }
+
+    return normals;
+}
+
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -232,6 +291,13 @@ OpenGLRenderAdapter::OpenGLRenderAdapter() : impl_{std::make_unique<Impl>()} {
 }
 
 OpenGLRenderAdapter::~OpenGLRenderAdapter() {
+    // GPU resources should have been released via cleanup() before the GL
+    // context is destroyed (see ViewportWidget::onContextAboutToBeDestroyed).
+    // Call cleanup() here as a safety net for non-GUI usage (e.g. unit tests).
+    cleanup();
+}
+
+void OpenGLRenderAdapter::cleanup() noexcept {
     if (!impl_->initialized || !impl_->gl) {
         return;
     }
@@ -240,11 +306,16 @@ OpenGLRenderAdapter::~OpenGLRenderAdapter() {
     for (auto& [id, entry] : impl_->meshes) {
         freeMeshEntry(gl, entry);
     }
+    impl_->meshes.clear();
+
     freeMeshEntry(gl, impl_->testTriangle);
 
     if (impl_->shaderProgram != 0u) {
         gl.glDeleteProgram(impl_->shaderProgram);
+        impl_->shaderProgram = 0;
     }
+
+    impl_->initialized = false;
 }
 
 void OpenGLRenderAdapter::initialize() {
@@ -298,9 +369,7 @@ void OpenGLRenderAdapter::uploadMesh(domain::BRepHandle handle, const domain::Tr
         impl_->meshes.erase(it);
     }
 
-    // Build normals (all zero for now — Sprint 0.4 placeholder).
-    // TODO(@dev, sprint-0.5): compute per-vertex normals from triangle faces
-    const std::vector<float> normals(mesh.vertices.size(), 0.f);
+    const std::vector<float> normals = computeNormals(mesh.vertices, mesh.indices);
 
     impl_->meshes[handle.id] = uploadEntry(gl, mesh.vertices, normals, mesh.indices);
 }

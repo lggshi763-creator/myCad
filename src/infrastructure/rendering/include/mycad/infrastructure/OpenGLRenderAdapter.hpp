@@ -52,6 +52,15 @@ public:
     /// @noexcept-ok
     void clearAll() noexcept;
 
+    /// @brief Releases all GPU resources (VAOs, VBOs, shader program).
+    ///
+    /// Must be called from within an active OpenGL context **before** the context
+    /// is destroyed — typically from a slot connected to
+    /// QOpenGLContext::aboutToBeDestroyed with Qt::DirectConnection.
+    /// Idempotent: safe to call more than once.
+    /// @noexcept-ok
+    void cleanup() noexcept;
+
     /// @brief Sets the view matrix used for the next render() call.
     ///
     /// @param mat4  Column-major 4×4 float array.  Caller retains ownership.

@@ -130,11 +130,40 @@
 
 ### 渲染 / UI
 
-- [ ] **GL context cleanup — 关闭窗口时 OpenGL 资源析构顺序错误**
-  - 上下文：Sprint 0.4 交付后，关闭主窗口时触发异常/崩溃。`OpenGLRenderAdapter::~OpenGLRenderAdapter` 在 Qt GL context 已销毁后调用 `glDeleteVertexArrays` / `glDeleteBuffers` / `glDeleteProgram`，属于无效 GL 调用
-  - 候选解：为 `OpenGLRenderAdapter` 增加 `cleanup()` 方法；在 `ViewportWidget::initializeGL()` 中把它连接到 `QOpenGLContext::aboutToBeDestroyed` 信号，保证 GL 资源在 context 销毁前被释放；destructor 改为只 reset PIMPL
-  - 风险：低（仅影响退出时体验，不影响运行时功能；但若后续加 ASan 会报 use-after-destroy）
-  - 计划：Sprint 0.5 T6 处理
+- [x] ~~**GL context cleanup — 关闭窗口时 OpenGL 资源析构顺序错误**~~  ← Sprint 0.5 T6 已修复
+  - 解决方案：`OpenGLRenderAdapter::cleanup()` + `ViewportWidget::initializeGL` 连接 `QOpenGLContext::aboutToBeDestroyed`（`Qt::DirectConnection`）
+
+---
+
+## 2026-05-16（Sprint 0.5 交付后录入）
+
+### 持久化 / 文件 IO
+
+- [ ] **CommandBus store 引用与 File → Open 不同步**
+  - 上下文：`onFileOpen` 替换了 `store_`，但 `CommandBus` 内部仍持有旧的 `shared_ptr<IEventStore>`。新增 box 命令会写入 session DB 而非打开的文件 DB
+  - 候选解：`CommandBus::replaceStore()` 方法；或引入 `shared_ptr<shared_ptr<IEventStore>>` 间接层（一次间接）
+  - 风险：中（功能性 bug，Save As 后状态不一致）
+  - 计划：Sprint 0.6
+
+- [ ] **File → New 不清 SQLite session DB**
+  - 上下文：New 只清 ECS + renderer，session DB 仍有旧事件。重启应用后 `onGlReady` demo box 会与 DB 中旧 box 版本冲突（version 冲突 or 重复 aggregateId）
+  - 候选解：New 时执行 `DELETE FROM events` 或切换到新临时文件路径
+  - 风险：低（单 box 时序尚不冲突，多 box 后会现形）
+  - 计划：Sprint 0.6
+
+- [ ] **onFileOpen 提取 events.db 路径固定为 `%TEMP%/events.db`**
+  - 上下文：多文件并发打开、或快速连续 Open 时会互相覆盖
+  - 候选解：`QTemporaryDir` 生成唯一目录，Sprint 0.6 时随 store 管理一起重构
+  - 风险：低（单用户单文件场景不会触发）
+  - 计划：Sprint 0.6
+
+### 渲染 / UI
+
+- [ ] **诊断三角形在 File → New 后重现**
+  - 上下文：`clearAll()` 后 `meshes.empty() == true`，`render()` 会重新画诊断三角形
+  - 候选解：加 `bool sceneInitialized_` 标志，或直接移除诊断三角形（Sprint 0.6 正式场景管理时一起处理）
+  - 风险：低（视觉 bug，不影响功能）
+  - 计划：Sprint 0.6
 
 ---
 

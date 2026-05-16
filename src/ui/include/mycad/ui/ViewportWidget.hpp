@@ -51,6 +51,13 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
 
+private slots:
+    /// @brief Releases all adapter GPU resources while the context is still active.
+    ///
+    /// Connected to QOpenGLContext::aboutToBeDestroyed with Qt::DirectConnection
+    /// in initializeGL() so it fires synchronously before the context dies.
+    void onContextAboutToBeDestroyed();
+
 private:
     std::shared_ptr<mycad::infrastructure::OpenGLRenderAdapter> adapter_;
     Camera camera_{};
