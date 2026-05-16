@@ -6,9 +6,36 @@ project(myCad
     LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# ---------------------------------------------------------------------------
+# CMake 4.x feature-table workaround for MSVC 19.50+ (Visual Studio 2026).
+#
+# CMake's built-in Compiler/MSVC-CXX.cmake feature tables only cover versions
+# up to ~19.44 (VS 2022 17.14). When a vcpkg package (e.g. EnTT) exports a
+# transitive compile-feature requirement (cxx_std_17), CMake's Generate step
+# fails with "No known features for CXX compiler MSVC 19.50" even though the
+# compiler obviously supports it. Seeding CMAKE_CXX_COMPILE_FEATURES with the
+# meta-feature names silences the lookup without changing compiler flags (the
+# actual /std:c++23 flag comes from CMAKE_CXX_STANDARD above).
+# ---------------------------------------------------------------------------
+if(MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "19.50")
+    set(CMAKE_CXX_COMPILE_FEATURES
+        cxx_std_98 cxx_std_11 cxx_std_14 cxx_std_17 cxx_std_20 cxx_std_23
+        cxx_alias_templates cxx_alignas cxx_alignof cxx_attributes
+        cxx_auto_type cxx_constexpr cxx_decltype cxx_defaulted_functions
+        cxx_delegating_constructors cxx_deleted_functions
+        cxx_final cxx_generic_lambdas cxx_inheriting_constructors
+        cxx_lambdas cxx_long_long_type cxx_noexcept cxx_nullptr
+        cxx_override cxx_range_for cxx_raw_string_literals
+        cxx_right_angle_brackets cxx_rvalue_references
+        cxx_sizeof_member cxx_static_assert cxx_strong_enums
+        cxx_trailing_return_types cxx_uniform_initialization
+        cxx_user_literals cxx_variadic_macros cxx_variadic_templates
+    )
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

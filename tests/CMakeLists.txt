@@ -55,3 +55,24 @@ catch_discover_tests(mycad_infra_tests
     OUTPUT_DIR ${MYCAD_TEST_REPORTS_DIR}
     OUTPUT_SUFFIX .xml
 )
+
+# ---------------------------------------------------------------------------
+# Application layer tests — CommandBus, command handlers, integration.
+# Separate from mycad_unit_tests so domain-purity check (V6) stays clean.
+# ---------------------------------------------------------------------------
+add_executable(mycad_app_tests
+    application/commandbus_test.cpp
+)
+
+target_link_libraries(mycad_app_tests
+    PRIVATE
+        Catch2::Catch2WithMain
+        mycad::application
+        mycad::compile_options
+)
+
+catch_discover_tests(mycad_app_tests
+    REPORTER junit
+    OUTPUT_DIR ${MYCAD_TEST_REPORTS_DIR}
+    OUTPUT_SUFFIX .xml
+)
