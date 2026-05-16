@@ -39,6 +39,7 @@ catch_discover_tests(mycad_unit_tests
 # ---------------------------------------------------------------------------
 add_executable(mycad_infra_tests
     infrastructure/geometry/occt_adapter_test.cpp
+    infrastructure/eventsourcing/in_memory_event_store_test.cpp
 )
 
 target_link_libraries(mycad_infra_tests

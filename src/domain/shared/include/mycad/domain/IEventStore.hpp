@@ -74,6 +74,14 @@ public:
     /// @return Version{0} if no events have been stored yet.
     [[nodiscard]] virtual Version latestVersion(AggregateId aggregateId) = 0;
 
+    /// @brief Convenience overload — appends a single event without manual span construction.
+    ///
+    /// Inline wrapper around append(); no virtual dispatch cost beyond the inner call.
+    void appendOne(AggregateId aggregateId, Version expectedVersion, const DomainEvent& ev) {
+        const DomainEvent* ptr = &ev;
+        append(aggregateId, expectedVersion, std::span<const DomainEvent* const>{&ptr, 1});
+    }
+
 protected:
     IEventStore() = default;
 };

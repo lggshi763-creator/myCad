@@ -6,6 +6,7 @@
 
 add_library(mycad_infrastructure STATIC
     geometry/OcctGeometryAdapter.cpp
+    eventsourcing/InMemoryEventStore.cpp
 )
 add_library(mycad::infrastructure ALIAS mycad_infrastructure)
 
@@ -14,6 +15,7 @@ target_compile_features(mycad_infrastructure PUBLIC cxx_std_23)
 # Public headers: consumers use #include <mycad/infrastructure/...>
 target_include_directories(mycad_infrastructure PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/geometry/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/eventsourcing/include>
 )
 
 # Private OCCT include path — not exposed to consumers.
