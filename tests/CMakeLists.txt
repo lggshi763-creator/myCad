@@ -42,6 +42,7 @@ add_executable(mycad_infra_tests
     infrastructure/eventsourcing/in_memory_event_store_test.cpp
     infrastructure/eventsourcing/sqlite_eventstore_test.cpp
     infrastructure/ecs/entt_registry_test.cpp
+    infrastructure/persistence/mycad_file_store_test.cpp
     application/createbox_test.cpp
 )
 

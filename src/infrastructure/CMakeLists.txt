@@ -13,7 +13,7 @@ add_library(mycad_infrastructure STATIC
     ecs/EnttRegistry.cpp
     rendering/OpenGLRenderAdapter.cpp
     eventsourcing/SqliteEventStore.cpp
-    # persistence/MycadFileStore.cpp  ← added in T3
+    persistence/MycadFileStore.cpp
 )
 add_library(mycad::infrastructure ALIAS mycad_infrastructure)
 
