@@ -46,6 +46,12 @@ public:
     /// @noexcept-ok
     void removeMesh(domain::BRepHandle handle) noexcept override;
 
+    /// @brief Removes all uploaded mesh GPU resources.  No-op if not initialized.
+    ///
+    /// Called before replaying a new scene (File → New / Open).
+    /// @noexcept-ok
+    void clearAll() noexcept;
+
     /// @brief Sets the view matrix used for the next render() call.
     ///
     /// @param mat4  Column-major 4×4 float array.  Caller retains ownership.

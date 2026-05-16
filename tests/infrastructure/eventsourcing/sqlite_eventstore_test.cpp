@@ -289,3 +289,53 @@ TEST_CASE("SqliteEventStore - default payload is empty JSON object", "[infra][sq
     REQUIRE(rows.size() == 1u);
     CHECK(rows[0].payload == "{}");
 }
+
+// ---------------------------------------------------------------------------
+// allAggregateIds
+// ---------------------------------------------------------------------------
+
+TEST_CASE("SqliteEventStore - allAggregateIds returns all distinct aggregates", "[infra][sqlite]") {
+    registerTestEvents();
+    TempDb tmp{"test_sqlite_allids.db"};
+
+    const auto aid1 = freshId();
+    const auto aid2 = freshId();
+
+    mycad::infrastructure::SqliteEventStore store{tmp.path};
+
+    // Empty store returns nothing.
+    CHECK(store.allAggregateIds().empty());
+
+    ThingRecorded e1{aid1, mycad::domain::Version{1}, 0u};
+    ThingRecorded e2{aid2, mycad::domain::Version{1}, 0u};
+    store.appendOne(aid1, mycad::domain::Version{0}, e1);
+    store.appendOne(aid2, mycad::domain::Version{0}, e2);
+
+    // Two distinct aggregates.
+    const auto ids = store.allAggregateIds();
+    REQUIRE(ids.size() == 2u);
+
+    // Both original IDs must appear (order not guaranteed).
+    const bool hasAid1 = ids[0] == aid1 || ids[1] == aid1;
+    const bool hasAid2 = ids[0] == aid2 || ids[1] == aid2;
+    CHECK(hasAid1);
+    CHECK(hasAid2);
+}
+
+TEST_CASE("SqliteEventStore - allAggregateIds deduplicates multiple events per aggregate",
+          "[infra][sqlite]") {
+    registerTestEvents();
+    TempDb tmp{"test_sqlite_allids_dedup.db"};
+    const auto aid = freshId();
+
+    mycad::infrastructure::SqliteEventStore store{tmp.path};
+    ThingRecorded e1{aid, mycad::domain::Version{1}, 0u};
+    ThingRecorded e2{aid, mycad::domain::Version{2}, 0u};
+    store.appendOne(aid, mycad::domain::Version{0}, e1);
+    store.appendOne(aid, mycad::domain::Version{1}, e2);
+
+    // Only one distinct aggregate ID despite two events.
+    const auto ids = store.allAggregateIds();
+    REQUIRE(ids.size() == 1u);
+    CHECK(ids[0] == aid);
+}

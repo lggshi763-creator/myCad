@@ -85,6 +85,11 @@ public:
     /// full business-data fields (e.g. BoxCreatedEvent::dx / dy / dz).
     [[nodiscard]] std::vector<RawRow> loadRows(domain::AggregateId aggregateId) const;
 
+    /// @brief Returns all distinct aggregate IDs present in the database.
+    ///
+    /// Used by File → Open to enumerate every aggregate that needs to be replayed.
+    [[nodiscard]] std::vector<domain::AggregateId> allAggregateIds() const;
+
     /// @brief Returns the database file path passed to the constructor.
     [[nodiscard]] std::string_view dbPath() const noexcept;
 

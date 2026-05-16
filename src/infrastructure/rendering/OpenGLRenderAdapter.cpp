@@ -317,6 +317,17 @@ void OpenGLRenderAdapter::removeMesh(domain::BRepHandle handle) noexcept {
     impl_->meshes.erase(it);
 }
 
+void OpenGLRenderAdapter::clearAll() noexcept {
+    if (!impl_->initialized || !impl_->gl) {
+        return;
+    }
+    auto& gl = *impl_->gl;
+    for (auto& [id, entry] : impl_->meshes) {
+        freeMeshEntry(gl, entry);
+    }
+    impl_->meshes.clear();
+}
+
 void OpenGLRenderAdapter::setViewMatrix(const float* mat4) noexcept {
     std::memcpy(impl_->viewMat.data(), mat4, 16 * sizeof(float));
 }

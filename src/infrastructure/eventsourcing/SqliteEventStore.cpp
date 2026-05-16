@@ -320,4 +320,26 @@ SqliteEventStore::loadRows(domain::AggregateId aggregateId) const {
     return rows;
 }
 
+// ---------------------------------------------------------------------------
+// allAggregateIds  (used by File → Open to enumerate all aggregates)
+// ---------------------------------------------------------------------------
+
+std::vector<domain::AggregateId> SqliteEventStore::allAggregateIds() const {
+    std::lock_guard lock(impl_->mu);
+
+    constexpr const char* kSQL = "SELECT DISTINCT aggregate_id FROM events;";
+
+    StmtGuard g;
+    if (sqlite3_prepare_v2(impl_->db, kSQL, -1, &g.s, nullptr) != SQLITE_OK) {
+        throw std::runtime_error(std::string("SqliteEventStore::allAggregateIds prepare: ") +
+                                 sqlite3_errmsg(impl_->db));
+    }
+
+    std::vector<domain::AggregateId> ids;
+    while (sqlite3_step(g.s) == SQLITE_ROW) {
+        ids.push_back(columnId(g.s, 0));
+    }
+    return ids;
+}
+
 }  // namespace mycad::infrastructure
