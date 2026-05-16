@@ -7,6 +7,7 @@
 add_library(mycad_infrastructure STATIC
     geometry/OcctGeometryAdapter.cpp
     eventsourcing/InMemoryEventStore.cpp
+    ecs/EnttRegistry.cpp
 )
 add_library(mycad::infrastructure ALIAS mycad_infrastructure)
 
@@ -16,6 +17,7 @@ target_compile_features(mycad_infrastructure PUBLIC cxx_std_23)
 target_include_directories(mycad_infrastructure PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/geometry/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/eventsourcing/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ecs/include>
 )
 
 # Private OCCT include path — not exposed to consumers.
@@ -28,6 +30,7 @@ target_link_libraries(mycad_infrastructure
     PUBLIC  mycad::domain
     PRIVATE mycad::compile_options
             # OCCT toolkits required by OcctGeometryAdapter (ADR-0004):
+            EnTT::EnTT    # ECS — EnttRegistry.hpp templates require entt types
             TKernel       # Standard_Failure, basic OCCT framework
             TKMath        # Bnd_Box, Poly_Triangulation
             TKBRep        # BRep_Tool, TopoDS, BRepBndLib, TopLoc_Location
