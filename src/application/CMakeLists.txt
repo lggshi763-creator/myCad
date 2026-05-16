@@ -5,6 +5,7 @@
 
 add_library(mycad_application STATIC
     CommandBus.cpp
+    handlers/CreateBoxCommandHandler.cpp
 )
 add_library(mycad::application ALIAS mycad_application)
 
@@ -13,6 +14,8 @@ add_library(mycad::application ALIAS mycad_application)
 # Public headers: consumers use #include <mycad/application/...>
 target_include_directories(mycad_application PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/commands/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/handlers/include>
 )
 
 target_link_libraries(mycad_application

@@ -41,12 +41,14 @@ add_executable(mycad_infra_tests
     infrastructure/geometry/occt_adapter_test.cpp
     infrastructure/eventsourcing/in_memory_event_store_test.cpp
     infrastructure/ecs/entt_registry_test.cpp
+    application/createbox_test.cpp
 )
 
 target_link_libraries(mycad_infra_tests
     PRIVATE
         Catch2::Catch2WithMain
         mycad::infrastructure
+        mycad::application
         mycad::compile_options
 )
 
