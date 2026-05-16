@@ -23,7 +23,8 @@
     "nlohmann-json",
     "tomlplusplus",
     "zstd",
-    "sqlite3"
+    "sqlite3",
+    "libzip"
   ],
   "features": {
     "tests": {
