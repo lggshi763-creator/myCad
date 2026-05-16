@@ -12,6 +12,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # --------------------------------------------------------------------------
+  # Tier-A isolation check — domain layer must not reference OCCT / EnTT / Qt.
+  # Pure grep, no build needed. Fails fast before the expensive matrix starts.
+  # ADR-0002 (domain zero deps), ADR-0004 (OCCT infra-only), ADR-0007 (EnTT).
+  # --------------------------------------------------------------------------
+  domain-isolation:
+    name: Domain layer isolation check
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Tier-A isolation check (domain must not reference OCCT/EnTT/Qt/fmt)
+        run: |
+          result=$(grep -rn \
+            '#include[[:space:]]*[<"]\(occt\|TopoDS\|BRep_\|entt/\|Qt\|fmt/\|spdlog\|<format>\)' \
+            src/domain/ 2>/dev/null || true)
+          if [ -n "$result" ]; then
+            echo "VIOLATION: domain layer contains forbidden includes:"
+            echo "$result"
+            exit 1
+          fi
+          echo "OK — domain layer is clean (ADR-0002 / ADR-0004 / ADR-0007)"
+
+      - name: Tier-B isolation check (infrastructure headers must not leak OCCT)
+        run: |
+          result=$(grep -rn \
+            '#include[[:space:]]*[<"]\(TopoDS\|BRep_\|BRepPrim\|BRepMesh\|Poly_\|Bnd_\|gp_\|opencascade/\)' \
+            src/infrastructure/geometry/include/ \
+            src/infrastructure/eventsourcing/include/ \
+            src/infrastructure/ecs/include/ 2>/dev/null || true)
+          if [ -n "$result" ]; then
+            echo "VIOLATION: infrastructure public headers contain OCCT leakage:"
+            echo "$result"
+            exit 1
+          fi
+          echo "OK — infrastructure public headers are OCCT-free (ADR-0004 V6)"
+
   build:
     name: ${{ matrix.os }} / ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}

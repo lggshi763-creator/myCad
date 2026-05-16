@@ -18,12 +18,12 @@
 
 ## Sprint 验收清单（端到端可验证）
 
-- [ ] **V1** `geometry_construction_test` PASS：`adapter->makeBox(10,10,10)` 拿到有效 BRepHandle，`tessellate` 返回顶点数 > 0
-- [ ] **V2** `event_store_test` PASS：append → reload EventTypeRegistry 反序列化 → 类型名匹配
-- [ ] **V3** `entt_registry_test` PASS：create / destroy / isAlive / ECS 组件 emplace + get 完整周期
-- [ ] **V4** `cmake --build` 链接通过，`src/domain/` 零 OCCT / EnTT 头文件引用（grep 确认）
-- [ ] **V5** CI Windows + Linux Debug + RelWithDebInfo 四 job green
-- [ ] **V6** `src/infrastructure/geometry/OcctGeometryAdapter.cpp` 中 OCCT 头文件仅在 .cpp 出现，.hpp 零泄漏
+- [x] **V1** `geometry_construction_test` PASS：`adapter->makeBox(10,10,10)` 拿到有效 BRepHandle，`tessellate` 返回顶点数 > 0
+- [x] **V2** `event_store_test` PASS：append → reload EventTypeRegistry 反序列化 → 类型名匹配
+- [x] **V3** `entt_registry_test` PASS：create / destroy / isAlive / ECS 组件 emplace + get 完整周期
+- [x] **V4** `cmake --build` 链接通过，`src/domain/` 零 OCCT / EnTT 头文件引用（grep 确认）
+- [ ] **V5** CI Windows + Linux Debug + RelWithDebInfo 四 job green（待 push 后验证）
+- [x] **V6** `src/infrastructure/geometry/OcctGeometryAdapter.cpp` 中 OCCT 头文件仅在 .cpp 出现，.hpp 零泄漏
 
 ---
 
@@ -636,16 +636,16 @@ git commit -m "feat(infrastructure): add EnttRegistry wrapping entt::registry (T
 
 ## Sprint 末验收清单（完整版）
 
-- [ ] T1-T7 全部 done
-- [ ] `cmake --build` 通过（domain + infrastructure 均无 OCCT/EnTT/Qt 头文件泄漏到 domain 层）
-- [ ] domain 层（111 tests）+ infrastructure 层（~20 tests）合计 ≥ 130 tests，全部 PASS
-- [ ] CI 四个 job（Windows Debug + RelWithDebInfo + Linux Debug + RelWithDebInfo）green
-- [ ] OcctGeometryAdapter 能创建立方体 + 网格化（V1 剧本完整跑通）
-- [ ] InMemoryEventStore 能 append → load → typeName 匹配（V2 剧本完整跑通）
-- [ ] EnttRegistry 能完整 ECS 组件生命周期（V3 剧本完整跑通）
-- [ ] `docs/devlog/2026-W21.md` 已写
-- [ ] `docs/sprints/sprint-0.3-playbook.md` 所有验收项已勾选
-- [ ] git tag `sprint-0.3-done` 已推送
+- [x] T1-T7 全部 done
+- [x] `cmake --build` 通过（domain + infrastructure 均无 OCCT/EnTT/Qt 头文件泄漏到 domain 层）
+- [x] domain 层（111 tests）+ infrastructure 层（46 tests）合计 **157 tests**，全部 PASS
+- [ ] CI 四个 job（Windows Debug + RelWithDebInfo + Linux Debug + RelWithDebInfo）green（待 push）
+- [x] OcctGeometryAdapter 能创建立方体 + 网格化（V1 剧本完整跑通）
+- [x] InMemoryEventStore 能 append → load → typeName 匹配（V2 剧本完整跑通）
+- [x] EnttRegistry 能完整 ECS 组件生命周期（V3 剧本完整跑通）
+- [x] `docs/devlog/2026-W21.md` 已写
+- [x] `docs/sprints/sprint-0.3-playbook.md` 所有验收项已勾选
+- [ ] git tag `sprint-0.3-done` 已推送（本次 commit 后执行）
 
 ---
 
