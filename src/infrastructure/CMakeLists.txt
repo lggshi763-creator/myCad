@@ -30,16 +30,16 @@ target_include_directories(mycad_infrastructure PRIVATE
 
 target_link_libraries(mycad_infrastructure
     PUBLIC  mycad::domain
+            EnTT::EnTT    # EnttRegistry.hpp is a PUBLIC header with entt templates
     PRIVATE mycad::compile_options
             # OCCT toolkits required by OcctGeometryAdapter (ADR-0004):
-            EnTT::EnTT    # ECS — EnttRegistry.hpp templates require entt types
             TKernel       # Standard_Failure, basic OCCT framework
             TKMath        # Bnd_Box, Poly_Triangulation
             TKBRep        # BRep_Tool, TopoDS, BRepBndLib, TopLoc_Location
             TKTopAlgo     # TopExp_Explorer
             TKPrim        # BRepPrimAPI_MakeBox
             TKMesh        # BRepMesh_IncrementalMesh
-            # Qt6 OpenGL — required by OpenGLRenderAdapter.cpp (ADR-0005):
+            # Qt6::OpenGL — QOpenGLFunctions_4_5_Core used in OpenGLRenderAdapter.cpp.
+            # Qt6::OpenGLWidgets is NOT needed here; QOpenGLWidget lives in mycad_ui.
             Qt6::OpenGL
-            Qt6::OpenGLWidgets
 )

@@ -35,7 +35,7 @@ public:
 
     void uploadMesh(mycad::domain::BRepHandle handle,
                     const mycad::domain::TriangleMesh& mesh) override {
-        uploadCalls.push_back({handle, mesh.vertexCount(), mesh.indexCount()});
+        uploadCalls.push_back({handle, mesh.vertexCount(), mesh.indices.size()});
     }
     void removeMesh(mycad::domain::BRepHandle /*handle*/) noexcept override {}
     void setViewMatrix(const float* /*mat4*/) noexcept override {}
